@@ -1,0 +1,51 @@
+id,name,district,lat,lng,demand_kg,traffic_zone,peak_hour_multiplier
+D0,Kho V9 Hoàng Mai,Hoàng Mai,20.9821,105.7913,0,none,1.0
+D1,Văn Quán,Thanh Xuân,21.0012,105.7823,5.2,low,1.2
+D2,Ngã Tư Sở,Đống Đa,21.0056,105.7856,3.1,medium,1.5
+D3,Cầu Giấy,Cầu Giấy,21.0285,105.7891,4.5,high,2.0
+D4,Trung Hoà,Cầu Giấy,21.0228,105.7956,6.8,medium,1.5
+D5,Dịch Vọng,Cầu Giấy,21.0382,105.7797,3.5,low,1.2
+D6,Trung Kính,Cầu Giấy,21.0345,105.7921,4.2,medium,1.5
+D7,Yên Hoà,Cầu Giấy,21.0412,105.7856,5.1,low,1.2
+D8,Quan Hoa,Cầu Giấy,21.0289,105.7982,2.8,medium,1.5
+D9,Hoàng Đạo Thúy,Thanh Xuân,21.0123,105.7845,4.9,medium,1.5
+D10,Khương Trung,Thanh Xuân,21.0089,105.7756,3.3,high,2.0
+D11,Thanh Xuân Bắc,Thanh Xuân,21.0156,105.7823,5.7,medium,1.5
+D12,Phương Liệt,Thanh Xuân,21.0023,105.7721,4.1,low,1.2
+D13,Hạ Đình,Thanh Xuân,21.0067,105.7656,3.9,low,1.2
+D14,Kim Giang,Thanh Xuân,20.9989,105.7691,4.6,medium,1.5
+D15,Chùa Bộc,Đống Đa,21.0123,105.8201,5.3,high,2.0
+D16,Thái Hà,Đống Đa,21.0189,105.8156,4.8,high,2.2
+D17,Tôn Đức Thắng,Đống Đa,21.0223,105.8234,3.7,high,2.0
+D18,Láng Hạ,Đống Đa,21.0324,105.8101,6.2,medium,1.5
+D19,Thái Thịnh,Đống Đa,21.0256,105.8189,4.4,high,2.0
+D20,Nguyễn Lương Bằng,Đống Đa,21.0289,105.8234,5.5,medium,1.5
+D21,Láng Trung,Đống Đa,21.0189,105.8012,3.8,medium,1.5
+D22,Khâm Thiên,Đống Đa,21.0123,105.8089,4.3,high,2.0
+D23,Trung Phụng,Đống Đa,21.0156,105.8123,5.9,medium,1.5
+D24,Ô Chợ Dừa,Đống Đa,21.0223,105.8167,4.7,low,1.2
+D25,Hàng Bột,Đống Đa,21.0256,105.8234,3.6,high,2.0
+D26,Lò Đúc,Hai Bà Trưng,21.0123,105.8456,5.1,high,2.2
+D27,Trần Khát Chân,Hai Bà Trưng,21.0089,105.8512,4.2,high,2.0
+D28,Bạch Đằng,Hai Bà Trưng,21.0156,105.8578,6.3,medium,1.5
+D29,Vĩnh Tuy,Hai Bà Trưng,21.0089,105.8712,3.4,medium,1.5
+D30,Minh Khai,Hai Bà Trưng,21.0223,105.8656,5.8,low,1.2
+D31,Nguyễn Trãi,Thanh Xuân,21.0067,105.7789,4.1,high,2.0
+D32,Vũ Trọng Phụng,Thanh Xuân,21.0102,105.7812,3.8,medium,1.5
+D33,Khuất Duy Tiễn,Thanh Xuân,21.0045,105.7834,4.5,medium,1.5
+D34,Ngụy Như Kontum,Thanh Xuân,21.0023,105.7798,3.2,low,1.2
+D35,Đại La,Hai Bà Trưng,21.0056,105.8432,5.6,high,2.0
+D36,Bạch Mai,Hai Bà Trưng,21.0012,105.8412,4.9,medium,1.5
+D37,Trương Định,Hai Bà Trưng,21.0098,105.8478,3.3,medium,1.5
+D38,Phố Huế,Hai Bà Trưng,21.0167,105.8432,4.2,high,2.2
+D39,Tô Hiến Thành,Thanh Xuân,21.0145,105.7765,3.7,low,1.2
+D40,Lê Trọng Tấn,Thanh Xuân,21.0089,105.7723,4.8,medium,1.5
+D41,Nguyễn Huy Tựo's,Đống Đa,21.0198,105.8267,3.9,medium,1.5
+D42,Phạm Đình Hổ,Hai Bà Trưng,21.0123,105.8498,4.1,high,2.0
+D43,Bà Triệu,Hai Bà Trưng,21.0156,105.8523,5.2,high,2.2
+D44,Trần Hưng Đạo,Hai Bà Trưng,21.0189,105.8567,4.6,medium,1.5
+D45,Lê Duẩn,Đống Đa,21.0089,105.8312,3.8,high,2.0
+D46,Tôn Thất Tùng,Đống Đa,21.0056,105.8289,4.4,medium,1.5
+D47,Bạch Thái Bưởi,Hai Bà Trưng,21.0123,105.8534,3.5,medium,1.5
+D48,Nguyễn Công Hoan,Đống Đa,21.0223,105.8298,4.7,low,1.2
+D49,Hồ Đắc Di,Đống Đa,21.0212,105.8312,3.6,medium,1.5

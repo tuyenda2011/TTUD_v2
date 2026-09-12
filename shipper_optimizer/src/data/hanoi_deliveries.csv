@@ -1,0 +1,32 @@
+id,name,district,lat,lng,demand_kg
+D0,Kho V9 Hoàng Mai,Hoàng Mai,20.9821,105.7913,0.0
+D1,Văn Quán,Thanh Xuân,21.0012,105.7823,15.5
+D2,Ngã Tư Sở,Đống Đa,21.0056,105.7856,12.0
+D3,Cầu Giấy,Cầu Giấy,21.0285,105.7891,18.0
+D4,Trung Hoà,Cầu Giấy,21.0228,105.7956,14.5
+D5,Dịch Vọng,Cầu Giấy,21.0382,105.7797,20.0
+D6,Trung Kính,Cầu Giấy,21.0345,105.7921,11.0
+D7,Yên Hoà,Cầu Giấy,21.0412,105.7856,16.0
+D8,Quan Hoa,Cầu Giấy,21.0289,105.7982,13.5
+D9,Hoàng Đạo Thúy,Thanh Xuân,21.0123,105.7845,22.0
+D10,Khương Trung,Thanh Xuân,21.0089,105.7756,9.5
+D11,Thanh Xuân Bắc,Thanh Xuân,21.0156,105.7823,17.0
+D12,Phương Liệt,Thanh Xuân,21.0023,105.7721,14.0
+D13,Hạ Đình,Thanh Xuân,21.0067,105.7656,19.5
+D14,Kim Giang,Thanh Xuân,20.9989,105.7691,10.0
+D15,Chùa Bộc,Đống Đa,21.0123,105.8201,25.0
+D16,Thái Hà,Đống Đa,21.0189,105.8156,13.0
+D17,Tôn Đức Thắng,Đống Đa,21.0223,105.8234,16.5
+D18,Láng Hạ,Đống Đa,21.0324,105.8101,21.0
+D19,Thái Thịnh,Đống Đa,21.0256,105.8189,15.0
+D20,Nguyễn Lương Bằng,Đống Đa,21.0289,105.8234,18.5
+D21,Láng Trung,Đống Đa,21.0189,105.8012,12.5
+D22,Khâm Thiên,Đống Đa,21.0123,105.8089,14.0
+D23,Trung Phụng,Đống Đa,21.0156,105.8123,11.5
+D24,Ô Chợ Dừa,Đống Đa,21.0223,105.8167,17.5
+D25,Hàng Bột,Đống Đa,21.0256,105.8234,13.0
+D26,Lò Đúc,Hai Bà Trưng,21.0123,105.8456,20.5
+D27,Trần Khát Chân,Hai Bà Trưng,21.0089,105.8512,16.0
+D28,Bạch Đằng,Hai Bà Trưng,21.0156,105.8578,19.0
+D29,Minh Khai,Hai Bà Trưng,21.0223,105.8656,22.5
+D30,Vĩnh Tuy,Hai Bà Trưng,21.0089,105.8712,18.0
