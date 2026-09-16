@@ -1,0 +1,963 @@
+{
+  "name": "synthetic-n30-seed42",
+  "depot": "A00-R00",
+  "nodes": [
+    {
+      "id": "A00-R00",
+      "x": 0.0,
+      "y": 0.0
+    },
+    {
+      "id": "A00-R01",
+      "x": 0.0,
+      "y": 4.0
+    },
+    {
+      "id": "A00-R02",
+      "x": 0.0,
+      "y": 8.0
+    },
+    {
+      "id": "A00-R03",
+      "x": 0.0,
+      "y": 12.0
+    },
+    {
+      "id": "A00-R04",
+      "x": 0.0,
+      "y": 16.0
+    },
+    {
+      "id": "A00-R05",
+      "x": 0.0,
+      "y": 20.0
+    },
+    {
+      "id": "A00-R06",
+      "x": 0.0,
+      "y": 24.0
+    },
+    {
+      "id": "A00-R07",
+      "x": 0.0,
+      "y": 28.0
+    },
+    {
+      "id": "A01-R00",
+      "x": 8.0,
+      "y": 0.0
+    },
+    {
+      "id": "A01-R01",
+      "x": 8.0,
+      "y": 4.0
+    },
+    {
+      "id": "A01-R02",
+      "x": 8.0,
+      "y": 8.0
+    },
+    {
+      "id": "A01-R03",
+      "x": 8.0,
+      "y": 12.0
+    },
+    {
+      "id": "A01-R04",
+      "x": 8.0,
+      "y": 16.0
+    },
+    {
+      "id": "A01-R05",
+      "x": 8.0,
+      "y": 20.0
+    },
+    {
+      "id": "A01-R06",
+      "x": 8.0,
+      "y": 24.0
+    },
+    {
+      "id": "A01-R07",
+      "x": 8.0,
+      "y": 28.0
+    },
+    {
+      "id": "A02-R00",
+      "x": 16.0,
+      "y": 0.0
+    },
+    {
+      "id": "A02-R01",
+      "x": 16.0,
+      "y": 4.0
+    },
+    {
+      "id": "A02-R02",
+      "x": 16.0,
+      "y": 8.0
+    },
+    {
+      "id": "A02-R03",
+      "x": 16.0,
+      "y": 12.0
+    },
+    {
+      "id": "A02-R04",
+      "x": 16.0,
+      "y": 16.0
+    },
+    {
+      "id": "A02-R05",
+      "x": 16.0,
+      "y": 20.0
+    },
+    {
+      "id": "A02-R06",
+      "x": 16.0,
+      "y": 24.0
+    },
+    {
+      "id": "A02-R07",
+      "x": 16.0,
+      "y": 28.0
+    },
+    {
+      "id": "A03-R00",
+      "x": 24.0,
+      "y": 0.0
+    },
+    {
+      "id": "A03-R01",
+      "x": 24.0,
+      "y": 4.0
+    },
+    {
+      "id": "A03-R02",
+      "x": 24.0,
+      "y": 8.0
+    },
+    {
+      "id": "A03-R03",
+      "x": 24.0,
+      "y": 12.0
+    },
+    {
+      "id": "A03-R04",
+      "x": 24.0,
+      "y": 16.0
+    },
+    {
+      "id": "A03-R05",
+      "x": 24.0,
+      "y": 20.0
+    },
+    {
+      "id": "A03-R06",
+      "x": 24.0,
+      "y": 24.0
+    },
+    {
+      "id": "A03-R07",
+      "x": 24.0,
+      "y": 28.0
+    },
+    {
+      "id": "A04-R00",
+      "x": 32.0,
+      "y": 0.0
+    },
+    {
+      "id": "A04-R01",
+      "x": 32.0,
+      "y": 4.0
+    },
+    {
+      "id": "A04-R02",
+      "x": 32.0,
+      "y": 8.0
+    },
+    {
+      "id": "A04-R03",
+      "x": 32.0,
+      "y": 12.0
+    },
+    {
+      "id": "A04-R04",
+      "x": 32.0,
+      "y": 16.0
+    },
+    {
+      "id": "A04-R05",
+      "x": 32.0,
+      "y": 20.0
+    },
+    {
+      "id": "A04-R06",
+      "x": 32.0,
+      "y": 24.0
+    },
+    {
+      "id": "A04-R07",
+      "x": 32.0,
+      "y": 28.0
+    }
+  ],
+  "edges": [
+    {
+      "source": "A00-R00",
+      "target": "A00-R01",
+      "distance": 4.0
+    },
+    {
+      "source": "A00-R01",
+      "target": "A00-R02",
+      "distance": 4.0
+    },
+    {
+      "source": "A00-R02",
+      "target": "A00-R03",
+      "distance": 4.0
+    },
+    {
+      "source": "A00-R03",
+      "target": "A00-R04",
+      "distance": 4.0
+    },
+    {
+      "source": "A00-R04",
+      "target": "A00-R05",
+      "distance": 4.0
+    },
+    {
+      "source": "A00-R05",
+      "target": "A00-R06",
+      "distance": 4.0
+    },
+    {
+      "source": "A00-R06",
+      "target": "A00-R07",
+      "distance": 4.0
+    },
+    {
+      "source": "A01-R00",
+      "target": "A01-R01",
+      "distance": 4.0
+    },
+    {
+      "source": "A01-R01",
+      "target": "A01-R02",
+      "distance": 4.0
+    },
+    {
+      "source": "A01-R02",
+      "target": "A01-R03",
+      "distance": 4.0
+    },
+    {
+      "source": "A01-R03",
+      "target": "A01-R04",
+      "distance": 4.0
+    },
+    {
+      "source": "A01-R04",
+      "target": "A01-R05",
+      "distance": 4.0
+    },
+    {
+      "source": "A01-R05",
+      "target": "A01-R06",
+      "distance": 4.0
+    },
+    {
+      "source": "A01-R06",
+      "target": "A01-R07",
+      "distance": 4.0
+    },
+    {
+      "source": "A00-R00",
+      "target": "A01-R00",
+      "distance": 8.0
+    },
+    {
+      "source": "A00-R07",
+      "target": "A01-R07",
+      "distance": 8.0
+    },
+    {
+      "source": "A02-R00",
+      "target": "A02-R01",
+      "distance": 4.0
+    },
+    {
+      "source": "A02-R01",
+      "target": "A02-R02",
+      "distance": 4.0
+    },
+    {
+      "source": "A02-R02",
+      "target": "A02-R03",
+      "distance": 4.0
+    },
+    {
+      "source": "A02-R03",
+      "target": "A02-R04",
+      "distance": 4.0
+    },
+    {
+      "source": "A02-R04",
+      "target": "A02-R05",
+      "distance": 4.0
+    },
+    {
+      "source": "A02-R05",
+      "target": "A02-R06",
+      "distance": 4.0
+    },
+    {
+      "source": "A02-R06",
+      "target": "A02-R07",
+      "distance": 4.0
+    },
+    {
+      "source": "A01-R00",
+      "target": "A02-R00",
+      "distance": 8.0
+    },
+    {
+      "source": "A01-R07",
+      "target": "A02-R07",
+      "distance": 8.0
+    },
+    {
+      "source": "A03-R00",
+      "target": "A03-R01",
+      "distance": 4.0
+    },
+    {
+      "source": "A03-R01",
+      "target": "A03-R02",
+      "distance": 4.0
+    },
+    {
+      "source": "A03-R02",
+      "target": "A03-R03",
+      "distance": 4.0
+    },
+    {
+      "source": "A03-R03",
+      "target": "A03-R04",
+      "distance": 4.0
+    },
+    {
+      "source": "A03-R04",
+      "target": "A03-R05",
+      "distance": 4.0
+    },
+    {
+      "source": "A03-R05",
+      "target": "A03-R06",
+      "distance": 4.0
+    },
+    {
+      "source": "A03-R06",
+      "target": "A03-R07",
+      "distance": 4.0
+    },
+    {
+      "source": "A02-R00",
+      "target": "A03-R00",
+      "distance": 8.0
+    },
+    {
+      "source": "A02-R07",
+      "target": "A03-R07",
+      "distance": 8.0
+    },
+    {
+      "source": "A04-R00",
+      "target": "A04-R01",
+      "distance": 4.0
+    },
+    {
+      "source": "A04-R01",
+      "target": "A04-R02",
+      "distance": 4.0
+    },
+    {
+      "source": "A04-R02",
+      "target": "A04-R03",
+      "distance": 4.0
+    },
+    {
+      "source": "A04-R03",
+      "target": "A04-R04",
+      "distance": 4.0
+    },
+    {
+      "source": "A04-R04",
+      "target": "A04-R05",
+      "distance": 4.0
+    },
+    {
+      "source": "A04-R05",
+      "target": "A04-R06",
+      "distance": 4.0
+    },
+    {
+      "source": "A04-R06",
+      "target": "A04-R07",
+      "distance": 4.0
+    },
+    {
+      "source": "A03-R00",
+      "target": "A04-R00",
+      "distance": 8.0
+    },
+    {
+      "source": "A03-R07",
+      "target": "A04-R07",
+      "distance": 8.0
+    }
+  ],
+  "products": [
+    {
+      "id": "SKU-00-01",
+      "location": "A00-R01",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-00-02",
+      "location": "A00-R02",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-00-03",
+      "location": "A00-R03",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-00-04",
+      "location": "A00-R04",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-00-05",
+      "location": "A00-R05",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-00-06",
+      "location": "A00-R06",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-01-01",
+      "location": "A01-R01",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-01-02",
+      "location": "A01-R02",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-01-03",
+      "location": "A01-R03",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-01-04",
+      "location": "A01-R04",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-01-05",
+      "location": "A01-R05",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-01-06",
+      "location": "A01-R06",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-02-01",
+      "location": "A02-R01",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-02-02",
+      "location": "A02-R02",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-02-03",
+      "location": "A02-R03",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-02-04",
+      "location": "A02-R04",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-02-05",
+      "location": "A02-R05",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-02-06",
+      "location": "A02-R06",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-03-01",
+      "location": "A03-R01",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-03-02",
+      "location": "A03-R02",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-03-03",
+      "location": "A03-R03",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-03-04",
+      "location": "A03-R04",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-03-05",
+      "location": "A03-R05",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-03-06",
+      "location": "A03-R06",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-04-01",
+      "location": "A04-R01",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-04-02",
+      "location": "A04-R02",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-04-03",
+      "location": "A04-R03",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-04-04",
+      "location": "A04-R04",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-04-05",
+      "location": "A04-R05",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-04-06",
+      "location": "A04-R06",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    }
+  ],
+  "orders": [
+    {
+      "id": "O0001",
+      "items": {
+        "SKU-03-06": 2
+      },
+      "due": 5.507560071256487,
+      "rank": 0
+    },
+    {
+      "id": "O0002",
+      "items": {
+        "SKU-00-05": 3,
+        "SKU-03-06": 1
+      },
+      "due": 6.4919131062882744,
+      "rank": 1
+    },
+    {
+      "id": "O0003",
+      "items": {
+        "SKU-00-02": 2,
+        "SKU-00-01": 4,
+        "SKU-00-03": 1,
+        "SKU-01-01": 3
+      },
+      "due": 5.181606364310086,
+      "rank": 2
+    },
+    {
+      "id": "O0004",
+      "items": {
+        "SKU-04-02": 4,
+        "SKU-04-04": 4,
+        "SKU-00-01": 2
+      },
+      "due": 6.797272059070531,
+      "rank": 3
+    },
+    {
+      "id": "O0005",
+      "items": {
+        "SKU-00-03": 6
+      },
+      "due": 4.93444065532942,
+      "rank": 4
+    },
+    {
+      "id": "O0006",
+      "items": {
+        "SKU-02-06": 1
+      },
+      "due": 4.703348700858982,
+      "rank": 5
+    },
+    {
+      "id": "O0007",
+      "items": {
+        "SKU-00-03": 1,
+        "SKU-02-06": 1
+      },
+      "due": 5.8881979389550505,
+      "rank": 6
+    },
+    {
+      "id": "O0008",
+      "items": {
+        "SKU-03-01": 3,
+        "SKU-01-01": 1,
+        "SKU-03-05": 1
+      },
+      "due": 6.4560179344571225,
+      "rank": 7
+    },
+    {
+      "id": "O0009",
+      "items": {
+        "SKU-00-03": 2,
+        "SKU-04-04": 1,
+        "SKU-01-02": 1
+      },
+      "due": 6.1402002066493555,
+      "rank": 8
+    },
+    {
+      "id": "O0010",
+      "items": {
+        "SKU-02-03": 2,
+        "SKU-03-03": 4,
+        "SKU-04-03": 1
+      },
+      "due": 6.487665750843588,
+      "rank": 9
+    },
+    {
+      "id": "O0011",
+      "items": {
+        "SKU-03-05": 1,
+        "SKU-04-06": 1,
+        "SKU-03-04": 2
+      },
+      "due": 6.430980146965847,
+      "rank": 10
+    },
+    {
+      "id": "O0012",
+      "items": {
+        "SKU-02-06": 1,
+        "SKU-03-06": 1
+      },
+      "due": 5.387222423174056,
+      "rank": 11
+    },
+    {
+      "id": "O0013",
+      "items": {
+        "SKU-02-03": 2,
+        "SKU-02-01": 2
+      },
+      "due": 4.8037556591626895,
+      "rank": 12
+    },
+    {
+      "id": "O0014",
+      "items": {
+        "SKU-01-02": 6
+      },
+      "due": 4.828157463960329,
+      "rank": 13
+    },
+    {
+      "id": "O0015",
+      "items": {
+        "SKU-01-01": 1,
+        "SKU-03-03": 2,
+        "SKU-02-04": 1
+      },
+      "due": 6.739148386041693,
+      "rank": 14
+    },
+    {
+      "id": "O0016",
+      "items": {
+        "SKU-01-03": 3,
+        "SKU-00-05": 5
+      },
+      "due": 5.249299672612169,
+      "rank": 15
+    },
+    {
+      "id": "O0017",
+      "items": {
+        "SKU-00-03": 1,
+        "SKU-04-01": 1,
+        "SKU-00-02": 1
+      },
+      "due": 6.30571703926142,
+      "rank": 16
+    },
+    {
+      "id": "O0018",
+      "items": {
+        "SKU-03-03": 1,
+        "SKU-00-06": 1
+      },
+      "due": 6.3216394466234345,
+      "rank": 17
+    },
+    {
+      "id": "O0019",
+      "items": {
+        "SKU-02-01": 7
+      },
+      "due": 4.5653699608489555,
+      "rank": 18
+    },
+    {
+      "id": "O0020",
+      "items": {
+        "SKU-01-04": 6
+      },
+      "due": 5.342227817732071,
+      "rank": 19
+    },
+    {
+      "id": "O0021",
+      "items": {
+        "SKU-02-05": 6,
+        "SKU-04-06": 3
+      },
+      "due": 6.736596409415609,
+      "rank": 20
+    },
+    {
+      "id": "O0022",
+      "items": {
+        "SKU-02-04": 5,
+        "SKU-00-01": 3,
+        "SKU-00-04": 2
+      },
+      "due": 5.69682111732971,
+      "rank": 21
+    },
+    {
+      "id": "O0023",
+      "items": {
+        "SKU-04-03": 1,
+        "SKU-00-03": 1
+      },
+      "due": 5.45930492859821,
+      "rank": 22
+    },
+    {
+      "id": "O0024",
+      "items": {
+        "SKU-00-05": 4,
+        "SKU-03-04": 5
+      },
+      "due": 6.747960122969685,
+      "rank": 23
+    },
+    {
+      "id": "O0025",
+      "items": {
+        "SKU-02-03": 4,
+        "SKU-04-05": 2,
+        "SKU-02-05": 1
+      },
+      "due": 6.279469181597223,
+      "rank": 24
+    },
+    {
+      "id": "O0026",
+      "items": {
+        "SKU-00-01": 1,
+        "SKU-03-01": 1
+      },
+      "due": 5.068106529653733,
+      "rank": 25
+    },
+    {
+      "id": "O0027",
+      "items": {
+        "SKU-03-01": 7,
+        "SKU-01-02": 2
+      },
+      "due": 5.859275561415749,
+      "rank": 26
+    },
+    {
+      "id": "O0028",
+      "items": {
+        "SKU-01-03": 1,
+        "SKU-03-04": 1
+      },
+      "due": 6.332975275495667,
+      "rank": 27
+    },
+    {
+      "id": "O0029",
+      "items": {
+        "SKU-02-06": 4,
+        "SKU-00-05": 4
+      },
+      "due": 6.5956445807648265,
+      "rank": 28
+    },
+    {
+      "id": "O0030",
+      "items": {
+        "SKU-01-06": 1,
+        "SKU-02-02": 1
+      },
+      "due": 5.152480171038505,
+      "rank": 29
+    }
+  ],
+  "operations": {
+    "pickers": 3,
+    "capacity": 20,
+    "speed": 60.0,
+    "location_minutes": 0.1,
+    "batch_minutes": 0.5
+  },
+  "metadata": {
+    "source": "synthetic/internal-v1",
+    "seed": 42,
+    "units": {
+      "distance": "metre",
+      "time": "minute",
+      "capacity": "item"
+    },
+    "layout": {
+      "type": "single_block",
+      "aisles": [
+        [
+          "A00-R00",
+          "A00-R01",
+          "A00-R02",
+          "A00-R03",
+          "A00-R04",
+          "A00-R05",
+          "A00-R06",
+          "A00-R07"
+        ],
+        [
+          "A01-R00",
+          "A01-R01",
+          "A01-R02",
+          "A01-R03",
+          "A01-R04",
+          "A01-R05",
+          "A01-R06",
+          "A01-R07"
+        ],
+        [
+          "A02-R00",
+          "A02-R01",
+          "A02-R02",
+          "A02-R03",
+          "A02-R04",
+          "A02-R05",
+          "A02-R06",
+          "A02-R07"
+        ],
+        [
+          "A03-R00",
+          "A03-R01",
+          "A03-R02",
+          "A03-R03",
+          "A03-R04",
+          "A03-R05",
+          "A03-R06",
+          "A03-R07"
+        ],
+        [
+          "A04-R00",
+          "A04-R01",
+          "A04-R02",
+          "A04-R03",
+          "A04-R04",
+          "A04-R05",
+          "A04-R06",
+          "A04-R07"
+        ]
+      ]
+    },
+    "due_dates": {
+      "synthetic": true,
+      "rule": "p_i + tau * H * (1 + spread * U_i)",
+      "tightness": 0.1,
+      "spread": 0.5,
+      "reference_pickers": 3,
+      "horizon": 26.108888888888888
+    }
+  },
+  "directed": false,
+  "schema_version": 1
+}

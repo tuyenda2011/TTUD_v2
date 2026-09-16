@@ -1,0 +1,195 @@
+{
+  "name": "synthetic-n4-seed33",
+  "depot": "A00-R00",
+  "nodes": [
+    {
+      "id": "A00-R00",
+      "x": 0.0,
+      "y": 0.0
+    },
+    {
+      "id": "A00-R01",
+      "x": 0.0,
+      "y": 4.0
+    },
+    {
+      "id": "A00-R02",
+      "x": 0.0,
+      "y": 8.0
+    },
+    {
+      "id": "A00-R03",
+      "x": 0.0,
+      "y": 12.0
+    },
+    {
+      "id": "A01-R00",
+      "x": 8.0,
+      "y": 0.0
+    },
+    {
+      "id": "A01-R01",
+      "x": 8.0,
+      "y": 4.0
+    },
+    {
+      "id": "A01-R02",
+      "x": 8.0,
+      "y": 8.0
+    },
+    {
+      "id": "A01-R03",
+      "x": 8.0,
+      "y": 12.0
+    }
+  ],
+  "edges": [
+    {
+      "source": "A00-R00",
+      "target": "A00-R01",
+      "distance": 4.0
+    },
+    {
+      "source": "A00-R01",
+      "target": "A00-R02",
+      "distance": 4.0
+    },
+    {
+      "source": "A00-R02",
+      "target": "A00-R03",
+      "distance": 4.0
+    },
+    {
+      "source": "A01-R00",
+      "target": "A01-R01",
+      "distance": 4.0
+    },
+    {
+      "source": "A01-R01",
+      "target": "A01-R02",
+      "distance": 4.0
+    },
+    {
+      "source": "A01-R02",
+      "target": "A01-R03",
+      "distance": 4.0
+    },
+    {
+      "source": "A00-R00",
+      "target": "A01-R00",
+      "distance": 8.0
+    },
+    {
+      "source": "A00-R03",
+      "target": "A01-R03",
+      "distance": 8.0
+    }
+  ],
+  "products": [
+    {
+      "id": "SKU-00-01",
+      "location": "A00-R01",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-00-02",
+      "location": "A00-R02",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-01-01",
+      "location": "A01-R01",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    },
+    {
+      "id": "SKU-01-02",
+      "location": "A01-R02",
+      "size": 1.0,
+      "pick_minutes": 0.08
+    }
+  ],
+  "orders": [
+    {
+      "id": "O0001",
+      "items": {
+        "SKU-01-01": 2,
+        "SKU-00-02": 1
+      },
+      "due": 2.666227943959268,
+      "rank": 0
+    },
+    {
+      "id": "O0002",
+      "items": {
+        "SKU-01-02": 1,
+        "SKU-00-02": 1,
+        "SKU-00-01": 2,
+        "SKU-01-01": 2
+      },
+      "due": 3.0249786205293274,
+      "rank": 1
+    },
+    {
+      "id": "O0003",
+      "items": {
+        "SKU-01-02": 8
+      },
+      "due": 2.7658827300338067,
+      "rank": 2
+    },
+    {
+      "id": "O0004",
+      "items": {
+        "SKU-01-01": 4
+      },
+      "due": 2.441002138430857,
+      "rank": 3
+    }
+  ],
+  "operations": {
+    "pickers": 2,
+    "capacity": 8,
+    "speed": 60.0,
+    "location_minutes": 0.1,
+    "batch_minutes": 0.5
+  },
+  "metadata": {
+    "source": "synthetic/internal-v1",
+    "seed": 33,
+    "units": {
+      "distance": "metre",
+      "time": "minute",
+      "capacity": "item"
+    },
+    "layout": {
+      "type": "single_block",
+      "aisles": [
+        [
+          "A00-R00",
+          "A00-R01",
+          "A00-R02",
+          "A00-R03"
+        ],
+        [
+          "A01-R00",
+          "A01-R01",
+          "A01-R02",
+          "A01-R03"
+        ]
+      ]
+    },
+    "due_dates": {
+      "synthetic": true,
+      "rule": "p_i + tau * H * (1 + spread * U_i)",
+      "tightness": 0.25,
+      "spread": 0.5,
+      "reference_pickers": 2,
+      "horizon": 3.373333333333333
+    }
+  },
+  "directed": false,
+  "schema_version": 1
+}

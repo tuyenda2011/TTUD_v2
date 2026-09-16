@@ -1,0 +1,31 @@
+__pycache__/
+.pytest_cache/
+*.egg-info/
+.venv/
+build/
+dist/
+
+# Downloaded archives and converted author datasets are optional/local.
+# Do not publish the author's data unless redistribution permission is confirmed.
+/data/raw/*
+!/data/raw/manifest.json
+/data/processed/*
+
+# Keep bundled synthetic examples; ignore files created by README examples.
+/data/synthetic/first_run.json
+/data/synthetic/my_*.json
+
+# Keep compact reports and reproducibility metadata, not bulk run outputs.
+/results/**
+!/results/**/
+!/results/**/REPORT.md
+!/results/**/summary.json
+!/results/**/config.json
+!/results/**/runs.csv
+# Manifests may contain local executable paths and working-tree metadata.
+
+# Small curated demo assets remain available in a fresh checkout.
+!/results/demo/**
+!/results/demo_vns/**
+# Keep every generated benchmark manifest local, including under curated outputs.
+/results/**/manifest.json

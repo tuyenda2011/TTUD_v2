@@ -1,0 +1,6 @@
+# Core / CLI uses only the Python standard library.
+streamlit>=1.62,<2
+matplotlib>=3.7,<4
+pandas>=2,<4
+pytest>=7,<10
+
