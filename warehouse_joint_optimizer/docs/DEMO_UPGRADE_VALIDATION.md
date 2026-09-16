@@ -33,7 +33,7 @@ Xem [đánh giá tổng quan dự án](../DANH_GIA_TONG_QUAN_DU_AN.md) để ph�
 
 ## Benchmark thực đo
 
-Xem [báo cáo 96 nghiệm](../results/demo_upgrade_benchmark/REPORT.md), [cấu hình](../results/demo_upgrade_benchmark/config.json), [tổng hợp](../results/demo_upgrade_benchmark/summary.json) và [manifest](../results/demo_upgrade_benchmark/manifest.json).
+Xem [báo cáo 96 nghiệm](../results/demo_upgrade_benchmark/REPORT.md), [cấu hình](../results/demo_upgrade_benchmark/config.json) và [tổng hợp](../results/demo_upgrade_benchmark/summary.json). Manifest chi tiết chỉ lưu local vì có thể chứa đường dẫn máy và trạng thái working tree.
 
 - Synthetic: 10/30/100 đơn, seed dữ liệu 42, sức chứa 20. Kris: một bộ mỗi nhóm 6/12/18 đơn, file cụ thể có trong config.
 - B0/B2 chạy một lần mỗi bộ/ngân sách; ALNS/VNS chạy seed 7/42/101 ở ngân sách 1/3 giây, tối đa 2.000 vòng.

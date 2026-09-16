@@ -93,7 +93,7 @@ Trong mẫu này VNS tốt nhất trong bốn phương pháp; ALNS cải thiện
 
 Thời gian mỗi lần giải trong đợt đo khoảng 0,003–3,009 giây; khởi tạo lớn nhất khoảng 0,109 giây. Chạy tuần tự trên máy đang phát triển, không cô lập tải hệ thống; chưa đo RAM và chưa chứng minh giới hạn quy mô lớn. Không so điểm F giữa hai instance khác nhau như cùng một thang chi phí tuyệt đối.
 
-Nguồn: [báo cáo benchmark](results/demo_upgrade_benchmark/REPORT.md), [summary](results/demo_upgrade_benchmark/summary.json), [manifest](results/demo_upgrade_benchmark/manifest.json). Hash/revision chỉ phản ánh thời điểm đo; bản sửa metadata sau đó không được ngầm coi là đã chạy lại toàn bộ benchmark.
+Nguồn: [báo cáo benchmark](results/demo_upgrade_benchmark/REPORT.md) và [summary](results/demo_upgrade_benchmark/summary.json). Manifest chi tiết chỉ lưu local vì có thể chứa đường dẫn máy và trạng thái working tree. Hash/revision chỉ phản ánh thời điểm đo; bản sửa metadata sau đó không được ngầm coi là đã chạy lại toàn bộ benchmark.
 
 ## 7. Ưu tiên để tăng khả năng đạt điểm cao
 
