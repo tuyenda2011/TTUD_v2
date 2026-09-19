@@ -36,3 +36,7 @@ result/
 results/
 test/
 tests/
+
+# Data and docs directories
+data/
+docs/

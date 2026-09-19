@@ -10,7 +10,7 @@ Mở **Anaconda Prompt** và chạy:
 
 ```powershell
 conda activate TTUD
-cd <duong-dan-toi>\warehouse_joint_optimizer
+cd /d d:\TTUD_v2
 python -m pip install -r requirements.txt
 python -m streamlit run demo/app.py
 ```
@@ -33,7 +33,7 @@ Trong VS Code:
 3. Chuyển vào thư mục chứa `requirements.txt` và `demo`:
 
 ```cmd
-cd /d d:\TTUD_v2\warehouse_joint_optimizer
+cd /d d:\TTUD_v2
 ```
 
 *(Nếu bạn lưu dự án ở vị trí khác, hãy thay bằng đường dẫn thực tế của bạn. Tham số `/d` trong CMD giúp chuyển đổi đúng giữa các ổ đĩa như C: và D:).*
@@ -71,7 +71,7 @@ Trình duyệt sẽ tự động mở giao diện ứng dụng. Nếu chưa mở
 Không cần cài lại thư viện. Mỗi khi mở VS Code, chỉ cần gõ 2 dòng:
 
 ```cmd
-cd /d d:\TTUD_v2\warehouse_joint_optimizer
+cd /d d:\TTUD_v2
 .venv\Scripts\activate
 streamlit run demo/app.py
 ```
@@ -79,7 +79,7 @@ streamlit run demo/app.py
 <details>
 <summary>Nếu dùng macOS hoặc Linux</summary>
 
-Mở terminal tại thư mục `warehouse_joint_optimizer`, rồi chạy:
+Mở terminal tại thư mục `TTUD_v2`, rồi chạy:
 
 ```bash
 python3 -m venv .venv
@@ -140,7 +140,7 @@ Dữ liệu tổng hợp dùng mét/phút. Kris giữ nguyên đơn vị nguồn
 | Hiện tượng | Cách xử lý |
 |---|---|
 | `python` không được nhận diện hoặc mở Microsoft Store | Thử `py --version`. Nếu có Python từ 3.10, dùng `py -m venv .venv` ở bước tạo môi trường. Nếu chưa có, cài Python và mở lại terminal |
-| Không tìm thấy `requirements.txt` hoặc `demo/app.py` | Chuyển vào đúng thư mục `warehouse_joint_optimizer` trước khi chạy |
+| Không tìm thấy `requirements.txt` hoặc `demo/app.py` | Chuyển vào đúng thư mục `TTUD_v2` trước khi chạy |
 | `No module named streamlit` | Chạy lại `.venv\Scripts\python.exe -m pip install -r requirements.txt`, rồi mở ứng dụng bằng đúng Python trong `.venv` |
 | PowerShell chặn script / `Activate.ps1` | Mở terminal bằng **Command Prompt (CMD)** trong VS Code để tránh bị chặn ExecutionPolicy, hoặc dùng trực tiếp `.venv\Scripts\python.exe` |
 | Trình duyệt không tự mở | Sao chép địa chỉ `Local URL` từ terminal vào trình duyệt |
@@ -152,7 +152,7 @@ Dữ liệu tổng hợp dùng mét/phút. Kris giữ nguyên đơn vị nguồn
 
 ## 4. Chạy bằng dòng lệnh (tùy chọn)
 
-Các lệnh dưới đây chạy tại thư mục `warehouse_joint_optimizer`, sau khi đã kích hoạt môi trường (`.venv\Scripts\activate`). Không cần mở Streamlit.
+Các lệnh dưới đây chạy tại thư mục `TTUD_v2`, sau khi đã kích hoạt môi trường (`.venv\Scripts\activate`). Không cần mở Streamlit.
 
 ### Tạo dữ liệu → tối ưu → kiểm tra kết quả
 
@@ -248,24 +248,27 @@ Các tài liệu chi tiết:
 - [Định dạng dữ liệu JSON](docs/SCHEMA.md)
 - [Nguồn và cách chuẩn bị dữ liệu Kris](data/README.md)
 - [Ghi chú kiểm chứng và kết quả thực nghiệm](docs/VALIDATION.md)
-- [Thiết kế giao diện](DESIGN.md)
-- [Kế hoạch và trạng thái nâng cấp](demo-upgrade-plan.md)
-- [Đánh giá tổng quan và khả năng đạt điểm cao](DANH_GIA_TONG_QUAN_DU_AN.md)
-- [Quyết định file đưa lên GitHub](GITHUB_UPLOAD_GUIDE.md)
+- [Thiết kế giao diện](docs/DESIGN.md)
+- [Kế hoạch và trạng thái nâng cấp](docs/demo-upgrade-plan.md)
+- [Đánh giá tổng quan và khả năng đạt điểm cao](docs/DANH_GIA_TONG_QUAN_DU_AN.md)
+- [Quyết định file đưa lên GitHub](docs/GITHUB_UPLOAD_GUIDE.md)
 - [Mô hình, ví dụ tính tay và kịch bản bảo vệ](docs/MODEL_AND_DEFENSE.md)
 - [Thực nghiệm đối chứng bổ sung](docs/EVIDENCE_UPGRADE.md)
+- [Cẩm nang tinh tuý thiết kế & phân tích thuật toán](docs/TOM_TAT_THIET_KE_VA_PHAN_TICH_THUAT_TOAN.md)
 
 ### Các thư mục chính
 
 ```text
-warehouse_joint_optimizer/
-  demo/app.py       Giao diện trình duyệt
-  warehouse_opt/    Thuật toán và lệnh xử lý
-  data/             Dữ liệu đầu vào
-  results/          Kết quả chạy
-  configs/          Cấu hình benchmark
-  tests/            Bộ kiểm thử
-  docs/             Tài liệu chi tiết
+TTUD_v2/
+  demo/app.py       Giao diện trình duyệt Streamlit
+  warehouse_opt/    Thuật toán và package cốt lõi
+  data/             Dữ liệu đầu vào (synthetic, Kris)
+  results/          Kết quả chạy benchmark
+  configs/          Cấu hình benchmark JSON
+  tests/            Bộ 112 tests kiểm thử
+  docs/             Tất cả tài liệu chi tiết (.md)
+  Tai_lieu/         Tài liệu slide bài giảng môn học
+  output/           Thư mục xuất kết quả bổ sung
 ```
 
 ### Phạm vi mô hình
