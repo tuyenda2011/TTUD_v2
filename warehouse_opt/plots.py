@@ -14,13 +14,18 @@ def warehouse_figure(instance, result, picker=None, batch_id=None):
     ax.set_facecolor("#f8fafc")
     nodes = {n.id: n for n in instance.nodes}
     layout = instance.metadata.get("layout", {})
-    if layout.get("type") == "single_block":
+    if layout.get("type") in ("single_block", "multi_block"):
         aisles = layout.get("aisles", [])
+        cross_rows = sorted(layout.get("cross_aisles", []))
         for left, right in pairwise(aisles):
             a, b = nodes[left[0]], nodes[right[0]]
-            top = nodes[left[-1]].y
-            if b.x - a.x > 3 and top - a.y > 4:
-                ax.add_patch(Rectangle((a.x + 1.4, a.y + 2), b.x - a.x - 2.8, top - a.y - 4, facecolor="#e2e8f0", edgecolor="#cbd5e1", linewidth=.7, zorder=0))
+            bounds = [0] + cross_rows + [len(left) - 1]
+            for r_start, r_end in pairwise(bounds):
+                y_bot = nodes[left[r_start]].y
+                y_top = nodes[left[r_end]].y
+                if b.x - a.x > 3 and y_top - y_bot > 4:
+                    ax.add_patch(Rectangle((a.x + 1.4, y_bot + 2), b.x - a.x - 2.8, y_top - y_bot - 4,
+                                           facecolor="#e2e8f0", edgecolor="#cbd5e1", linewidth=.7, zorder=0))
     for edge in instance.edges:
         a, b = nodes[edge.source], nodes[edge.target]
         ax.plot([a.x, b.x], [a.y, b.y], color="#cbd5e1", linewidth=2, zorder=1)

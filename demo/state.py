@@ -2,7 +2,7 @@
 import hashlib
 import json
 
-from warehouse_opt.generator import generate
+from warehouse_opt.generator import MAP_SCENARIOS, generate
 from warehouse_opt.models import InputError, Instance, read_instance
 from warehouse_opt.search import SearchConfig
 from warehouse_opt.solver import solve
@@ -18,8 +18,19 @@ def upload_digest(content):
 
 def prepare_instance(draft, root, content=None):
     if draft["source"] == SYNTHETIC:
-        return generate(draft["orders"], draft["seed"], draft["pickers"],
-                        draft["capacity"], tightness=draft["tightness"])
+        scenario_key = draft.get("scenario", "single_block")
+        scen_cfg = MAP_SCENARIOS.get(scenario_key, MAP_SCENARIOS["single_block"])
+        return generate(
+            n=draft.get("orders", scen_cfg["n"]),
+            seed=draft.get("seed", 42),
+            pickers=draft.get("pickers", scen_cfg["pickers"]),
+            capacity=draft.get("capacity", scen_cfg["capacity"]),
+            aisles=scen_cfg["aisles"],
+            rows=scen_cfg["rows"],
+            tightness=draft.get("tightness", scen_cfg["tightness"]),
+            cross_aisles=scen_cfg["cross_aisles"],
+            demand_pattern=scen_cfg["demand_pattern"],
+        )
     if draft["source"] == KRIS:
         if not draft.get("file"):
             raise InputError("Chưa có dữ liệu Kris. Chọn dữ liệu tổng hợp hoặc chuẩn bị catalog Kris.")

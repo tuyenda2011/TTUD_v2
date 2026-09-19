@@ -5,7 +5,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
 
+from demo.simulation import render_simulation
 from demo.state import KRIS, SYNTHETIC, UPLOAD, improvement, upload_digest
+from warehouse_opt.generator import MAP_SCENARIOS
 from warehouse_opt.models import Instance
 from warehouse_opt.plots import gantt_figure, warehouse_figure
 from warehouse_opt.units import unit_label
@@ -35,9 +37,22 @@ def sidebar(root, on_run):
         source = st.selectbox("Nguồn dữ liệu", [SYNTHETIC, KRIS, UPLOAD], key="source")
         draft = {"source": source}
         if source == SYNTHETIC:
-            draft["orders"] = st.number_input("Số đơn", 1, 200, 10, key="orders")
-            draft["pickers"] = st.number_input("Số nhân viên", 1, 12, 3, key="pickers")
-            draft["capacity"] = st.number_input("Sức chứa mỗi chuyến", 1, 500, 20, key="capacity")
+            scen_labels = {
+                "single_block": "🟢 Kho tiêu chuẩn (Single-Block)",
+                "double_block": "🟡 Kho 2 khối có lối đi giữa (Double-Block)",
+                "mega_hub": "🏭 Đại kho vận 3 khối (Mega Hub)",
+                "rush_hour": "⚡ Giờ cao điểm hạn gấp (Rush Hour)",
+                "abc_zonal": "📦 Phân khu tần suất (ABC Zonal)",
+            }
+            scenario = st.selectbox("Kịch bản kho & Bản đồ", list(MAP_SCENARIOS.keys()),
+                                    format_func=lambda k: scen_labels.get(k, k), key="scenario")
+            draft["scenario"] = scenario
+            scen = MAP_SCENARIOS[scenario]
+            st.caption(f"ℹ️ {scen['description']}")
+
+            draft["orders"] = st.number_input("Số đơn", 1, 300, scen["n"], key="orders")
+            draft["pickers"] = st.number_input("Số nhân viên", 1, 12, scen["pickers"], key="pickers")
+            draft["capacity"] = st.number_input("Sức chứa mỗi chuyến", 1, 500, int(scen["capacity"]), key="capacity")
         elif source == KRIS:
             try:
                 catalog = json.loads((root / "data/processed/kris_small/catalog.json").read_text(encoding="utf-8"))
@@ -56,7 +71,7 @@ def sidebar(root, on_run):
             draft["upload_sha256"] = upload_digest(content)
         with st.expander("Nâng cao", expanded=False):
             if source == SYNTHETIC:
-                draft["tightness"] = st.slider("Độ nới hạn", .02, 1., .15, .01, key="tightness",
+                draft["tightness"] = st.slider("Độ nới hạn", .02, 1., scen["tightness"], .01, key="tightness",
                                                help="Giá trị nhỏ làm thời hạn giao đơn gấp hơn.")
             draft["seed"] = st.number_input("Seed", min_value=0, value=42, key="seed")
             draft["seconds"] = st.slider("Ngân sách mỗi thuật toán (giây)", .2, 10., 2., .2, key="budget")
@@ -156,12 +171,32 @@ def results_view(snapshot):
     native = instance.metadata.get("units", {}).get("time") == "source_time_unit"
     time_unit, distance_unit = unit_label(instance, "time"), unit_label(instance, "distance")
     metrics, baseline = result["metrics"], results["B0"]["metrics"]
-    for col, label, field, unit in zip(st.columns(3),
-            ["Đơn trễ", "Thời gian hoàn tất", "Quãng đường"],
-            ["late_orders", "makespan", "distance"], ["đơn", time_unit, distance_unit]):
-        value = str(metrics[field]) if field == "late_orders" else f"{metrics[field]:,.1f}"
-        col.metric(label, f"{value} {unit}")
-    overview, routes, details = st.tabs(["Tổng quan", "Tuyến & lịch", "Chi tiết"])
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Đơn trễ", f"{metrics['late_orders']} đơn")
+
+    if native:
+        total_sec = metrics["makespan"]
+        hours = int(total_sec // 3600)
+        mins = int((total_sec % 3600) // 60)
+        time_display = f"{hours}h {mins:02d}m" if hours > 0 else f"{mins}m {int(total_sec % 60):02d}s"
+        col2.metric("Thời gian hoàn tất", time_display, delta=f"{total_sec:,.0f} giây gốc", delta_color="off",
+                    help="Thời gian quy đổi từ đơn vị giây của benchmark Kris (1 đv nguồn = 1 giây)")
+
+        dist_m = metrics["distance"]
+        dist_display = f"{dist_m / 1000:.1f} km" if dist_m >= 1000 else f"{dist_m:,.0f} m"
+        col3.metric("Quãng đường", dist_display, delta=f"{dist_m:,.0f} m gốc", delta_color="off",
+                    help="Tổng quãng đường di chuyển theo mét/km")
+    else:
+        mins_val = metrics["makespan"]
+        m = int(mins_val)
+        s = int(round((mins_val - m) * 60))
+        col2.metric("Thời gian hoàn tất", f"{mins_val:,.1f} {time_unit}", delta=f"{m}m {s:02d}s", delta_color="off")
+        col3.metric("Quãng đường", f"{metrics['distance']:,.1f} {distance_unit}")
+    sim_tab, overview, routes, details = st.tabs(["🎮 Mô phỏng động", "Tổng quan", "Tuyến & lịch", "Chi tiết"])
+    with sim_tab:
+        st.subheader("Mô phỏng kho hàng thời gian thực (Digital Twin)")
+        st.caption("Chạy mượt mà 60fps trên trình duyệt · Hỗ trợ 3–6+ nhân viên đồng thời · Điều khiển Play/Pause/Tua/Tốc độ")
+        render_simulation(instance, result)
     with overview:
         st.subheader("Kết quả của phương án")
         st.write(f"Đã phân công **{metrics['batches']} chuyến** cho **{metrics['used_pickers']} nhân viên**. "
@@ -191,4 +226,3 @@ def results_view(snapshot):
                 "distance": f"Quãng đường ({distance_unit})", "start": f"Bắt đầu ({time_unit})", "end": f"Kết thúc ({time_unit})"}
         st.dataframe(pd.DataFrame([{k: b[k] for k in cols} for b in result["batches"]]).rename(columns=cols),
                      hide_index=True, width="stretch")
-
