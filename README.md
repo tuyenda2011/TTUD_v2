@@ -1,276 +1,175 @@
-# Warehouse Joint Optimizer
+# 🏭 Warehouse Joint Optimizer (JOBPRSP)
 
-Ứng dụng thử nghiệm giúp **gom đơn hàng thành từng chuyến, tìm đường lấy hàng và chia lịch cho nhân viên trong kho**. Bạn có thể xem sơ đồ đường đi, lịch làm việc và các đơn bị trễ ngay trên trình duyệt.
+> **Hệ thống Tối ưu hóa Đồng thời Gom đơn, Định tuyến và Lập lịch lấy hàng trong Kho hàng (Joint Order Batching, Picker Routing, and Picker Scheduling)**
 
-**Người dùng lần đầu chỉ cần làm mục 1 và 2.** Các mục sau dành cho chạy bằng lệnh và tìm hiểu thêm.
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
+[![Framework](https://img.shields.io/badge/Streamlit-1.30%2B-FF4B4B.svg)](https://streamlit.io/)
+[![Tests](https://img.shields.io/badge/Tests-123%20Passed-brightgreen.svg)](tests/)
+[![Algorithms](https://img.shields.io/badge/Algorithms-ALNS%20%7C%20VNS%20%7C%20LNS%20%7C%20Exact-orange.svg)](warehouse_opt/)
 
-### Nếu đã có môi trường Conda `TTUD`
+---
+
+## 🌟 Điểm nổi bật của dự án
+
+- **🎯 Tối ưu hóa đa mục tiêu (Joint Optimization):** Giải quyết bài toán tích hợp 3 giai đoạn: Gom đơn hàng vào chuyến (Batching), Tìm đường đi ngắn nhất trong lối đi (Routing - S-Shape, Return, 2-Opt), và Phân công lập lịch cho nhiều nhân viên (Scheduling).
+- **🎮 Mô phỏng động 60fps (Digital Twin Warehouse):** Trình diễn trực quan xe lấy hàng (Picker) chuyển động mượt mà dọc theo các lối đi, rẽ lối đi giữa, bốc dỡ hàng hóa và cập nhật tải trọng theo thời gian thực ngay trên trình duyệt (HTML5 Canvas).
+- **🗺️ 5 Kịch bản kho thực tế:** Hỗ trợ từ kho nhỏ 1 khối (`single_block`), kho 2 khối có lối đi cắt ngang (`double_block`), trung tâm phân phối lớn (`mega_hub`), giờ cao điểm Flash Sale (`rush_hour`), đến kho áp dụng nguyên tắc Pareto 80/20 (`abc_zonal`).
+- **📊 Đối chuẩn với Benchmark quốc tế:** Tích hợp và đối soát trực tiếp trên **243 bộ dữ liệu chuẩn của tác giả Kris Braekers**, quy đổi thông minh hiển thị giờ/phút và km trực quan.
+- **⚡ Thuật toán Metaheuristic mạnh mẽ:** So sánh đối chuẩn giữa các phương pháp: Cơ sở (`B0`, `B1`, `B2`, `B3`), `LNS`, `ALNS` (Adaptive Large Neighborhood Search), và `VNS` (Variable Neighborhood Search).
+
+---
+
+## 🚀 Hướng dẫn cài đặt & Khởi chạy nhanh
+
+### Cách 1: Sử dụng môi trường Conda có sẵn (`TTUD`)
 
 Mở **Anaconda Prompt** và chạy:
 
 ```powershell
 conda activate TTUD
 cd /d d:\TTUD_v2
-python -m pip install -r requirements.txt
-python -m streamlit run demo/app.py
+pip install -r requirements.txt
+streamlit run demo/app.py
 ```
 
-Nếu dùng `TTUD`, bỏ qua bước tạo `.venv` bên dưới và dùng `python` sau khi activate.
+---
 
-## 1. Cài đặt và mở ứng dụng
+### Cách 2: Cài đặt từ đầu bằng Python tiêu chuẩn
 
-### Chuẩn bị
-
-- Cài **Python 3.10 trở lên**; Python 3.12 là lựa chọn phù hợp để bắt đầu. Khi cài trên Windows, chọn **Add Python to PATH**.
-- Có kết nối Internet để tải thư viện trong lần cài đầu tiên.
-- Các lệnh bên dưới dùng **Command Prompt (CMD) trong VS Code** trên Windows. Chạy lần lượt từng dòng.
-
-### Bước 1 — Mở terminal CMD trong VS Code và vào đúng thư mục
-
-Trong VS Code:
-1. Mở menu **Terminal → New Terminal** (hoặc nhấn phím tắt ``Ctrl + ` ``).
-2. Nhấp vào biểu tượng mũi tên `v` cạnh dấu `+` ở góc trên thanh Terminal, chọn **Command Prompt** (hoặc `cmd`).
-3. Chuyển vào thư mục chứa `requirements.txt` và `demo`:
-
-```cmd
+#### Bước 1: Mở Terminal tại thư mục dự án
+```bash
 cd /d d:\TTUD_v2
 ```
 
-*(Nếu bạn lưu dự án ở vị trí khác, hãy thay bằng đường dẫn thực tế của bạn. Tham số `/d` trong CMD giúp chuyển đổi đúng giữa các ổ đĩa như C: và D:).*
-
-Kiểm tra Python:
-
-```cmd
-python --version
-```
-
-Bạn cần thấy kết quả dạng `Python 3.12.x` (hoặc phiên bản từ 3.10 trở lên). Nếu báo không tìm thấy Python, xem mục **Lỗi thường gặp** bên dưới.
-
-### Bước 2 — Cài thư viện (chỉ cần làm lần đầu)
-
-```cmd
+#### Bước 2: Tạo môi trường ảo và cài đặt thư viện
+```bash
+# Windows
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
-```
 
-Sau khi chạy `.venv\Scripts\activate`, bạn sẽ thấy chữ `(.venv)` xuất hiện ở đầu dòng lệnh, báo hiệu môi trường ảo đã sẵn sàng.
-
-### Bước 3 — Mở giao diện
-
-```cmd
-streamlit run demo/app.py
-```
-
-Trình duyệt sẽ tự động mở giao diện ứng dụng. Nếu chưa mở, truy cập **http://localhost:8501** hoặc địa chỉ `Local URL` hiển thị trong terminal.
-
-**Giữ terminal mở khi sử dụng ứng dụng.** Muốn dừng, quay lại terminal và nhấn `Ctrl+C`.
-
-### Những lần mở sau
-
-Không cần cài lại thư viện. Mỗi khi mở VS Code, chỉ cần gõ 2 dòng:
-
-```cmd
-cd /d d:\TTUD_v2
-.venv\Scripts\activate
-streamlit run demo/app.py
-```
-
-<details>
-<summary>Nếu dùng macOS hoặc Linux</summary>
-
-Mở terminal tại thư mục `TTUD_v2`, rồi chạy:
-
-```bash
+# macOS / Linux
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+```
+
+#### Bước 3: Khởi chạy ứng dụng Web
+```bash
 streamlit run demo/app.py
 ```
+Ứng dụng sẽ tự động mở tại địa chỉ: **http://localhost:8501**
 
-</details>
+---
 
-## 2. Chạy thử lần đầu
+## 🎮 Hướng dẫn sử dụng Giao diện Demo
 
-Để làm quen mà không cần chuẩn bị dữ liệu:
+Giao diện Web Streamlit được chia thành 4 khu vực làm việc chính:
 
-1. Ứng dụng mở sẵn **Dữ liệu tổng hợp — chỉ kiểm thử**, 10 đơn, 3 nhân viên, sức chứa 20.
-2. Bấm **Chạy tối ưu** ở thanh bên hoặc **Chạy với cấu hình này** trong nội dung chính. Trên điện thoại, mở thanh bên bằng nút góc trên trái nếu muốn đổi dữ liệu.
-3. Xem ba chỉ số **Đơn trễ**, **Thời gian hoàn tất**, **Quãng đường**. Trong **Phương án đang xem**, chọn `ALNS` hoặc `B0` để đối chiếu.
-4. Mở **Tuyến & lịch** để xem một chuyến; mở **Tải kết quả** để tải nghiệm, dữ liệu đầu vào hoặc toàn bộ lần chạy.
+1. **Thanh bên điều khiển (Sidebar):**
+   - **Nguồn dữ liệu:** Chọn **Dữ liệu tổng hợp** (5 kịch bản kho thực tế), **Kris — benchmark tác giả** (243 bộ dữ liệu chuẩn), hoặc **JSON tải lên**.
+   - **Cấu hình:** Số lượng đơn hàng, số nhân viên lấy hàng (3–6+ nhân viên), sức chứa của xe đẩy (capacity).
+   - **Mục nâng cao:** Tinh chỉnh độ nới hạn (`tightness`), seed ngẫu nhiên, ngân sách tìm kiếm (giây) và bật so sánh thuật toán (`VNS`, `LNS`, `B0-B3`).
+2. **Tab 1 — 🎮 Mô phỏng động (Digital Twin):**
+   - Xem picker di chuyển 60fps dọc lối đi kho, rẽ lối giữa, bốc dỡ hàng hóa và cập nhật dung lượng giỏ hàng.
+   - Bộ điều khiển tiện ích: Play / Pause / Tua lại ca làm việc (`↺ Xem lại`).
+   - Tùy chỉnh tốc độ phát (`0.5x`, `1x`, `2x`, `5x`).
+   - Hỗ trợ **Phóng to / Thu nhỏ / Kéo bản đồ (Zoom & Pan)** bằng chuột hoặc phím bấm `🔍+`, `🔍-`, `⛶`.
+   - Lọc góc nhìn theo từng nhân viên (`P1`, `P2`, ...).
+3. **Tab 2 — Tổng quan kết quả:**
+   - Đánh giá 3 chỉ số cốt lõi: **Đơn trễ**, **Thời gian hoàn tất (Makespan)**, **Quãng đường**.
+   - Biểu đồ hội tụ điểm mục tiêu $F$ và bảng so sánh trực quan giữa ALNS, VNS và baseline B0.
+4. **Tab 3 & 4 — Tuyến & Lịch trình / Bảng chi tiết:**
+   - Xem lộ trình chi tiết từng chuyến (Batch) và danh sách mặt hàng nhặt tại từng ô kệ.
+   - Tải kết quả nghiệm JSON, dữ liệu đầu vào hoặc snapshot toàn bộ phiên chạy.
 
-Mặc định chỉ chạy B0 + ALNS. Muốn thử VNS hoặc nhiều thuật toán, mở **Nâng cao** trong thanh bên. Khi sửa cấu hình, kết quả cũ được giữ nguyên và có thông báo chưa áp dụng; bấm chạy lại để tạo kết quả mới.
+---
 
-Các khu vực kết quả:
+## 🗺️ 5 Kịch bản kho hàng thực tế (Map Scenarios)
 
-| Khu vực | Bạn có thể xem gì? |
-|---|---|
-| Tổng quan | Số chuyến, nhân viên được phân công và số đơn đúng hạn |
-| Phân tích thuật toán (trong Tổng quan) | Điểm F, bảng đối chứng và biểu đồ hội tụ; đóng mặc định |
-| Tuyến & lịch | Mặc định một chuyến, lọc nhân viên/chuyến và xem lịch làm việc |
-| Chi tiết | Bảng đơn, bộ lọc đơn trễ và thông tin từng chuyến |
-| Tải kết quả | Tải nghiệm, dữ liệu đầu vào hoặc snapshot toàn bộ lần chạy |
+| Kịch bản | Tên kỹ thuật | Mô tả thực tế | Đặc điểm cấu trúc |
+| :--- | :--- | :--- | :--- |
+| **Kho 1 khối** | `single_block` | Kho tiêu chuẩn vừa và nhỏ (shop thời trang, nhà thuốc). | 4 dãy kệ song song, 1 khối liền mạch, 3 nhân viên. |
+| **Kho 2 khối** | `double_block` | Kho phân phối có lối đi cắt ngang ở giữa để quay đầu xe. | 10 khối kệ, có 1 lối đi giữa (`cross_aisle`), 3 nhân viên. |
+| **Trung tâm phân phối lớn** | `mega_hub` | Trung tâm chia chọn TMĐT lớn (Fulfillment Center). | 10 dãy kệ dài, 2 lối đi giữa chia làm 3 khối, 5 nhân viên. |
+| **Giờ cao điểm Flash Sale** | `rush_hour` | Mô phỏng áp lực đơn dồn dập (ngày hội 11/11, 12/12). | Đơn hàng phát sinh liên tục, hạn chót cực gấp (`tightness=0.3`). |
+| **Phân vùng ABC** | `abc_zonal` | Kho ứng dụng nguyên tắc Pareto 80/20 của ngành Logistics. | 20% mặt hàng bán chạy nhất (Nhóm A) xếp sát Depot. |
 
-**Picker** là nhân viên lấy hàng. **Batch** là nhóm đơn được lấy trong cùng một chuyến. **Instance** là một bộ dữ liệu gồm kho, hàng hóa, đơn hàng và thông số vận hành.
+---
 
-### Đọc kết quả như thế nào?
+## 💻 Chạy bằng Dòng lệnh CLI (Command Line)
 
-- **Hàm mục tiêu F:** điểm tổng hợp; thấp hơn là tốt hơn khi so sánh trên cùng dữ liệu và cùng cấu hình trọng số.
-- **Quãng đường:** tổng đường đi của tất cả các chuyến.
-- **Makespan:** thời điểm nhân viên cuối cùng hoàn thành công việc.
-- **Tổng độ trễ:** tổng thời gian trễ hạn của các đơn.
-- **Đơn trễ:** số đơn hoàn thành sau hạn.
+Bạn có thể chạy độc lập các module sinh dữ liệu, giải thuật toán và kiểm tra tính hợp lệ mà không cần mở giao diện Web:
 
-Ứng dụng dùng **hạn mềm**: nghiệm hợp lệ vẫn có thể có đơn trễ. Một phương án có F thấp hơn cũng không nhất thiết tốt hơn ở mọi chỉ số.
+```bash
+# 1. Tự sinh dữ liệu kho theo kịch bản
+python -m warehouse_opt generate --orders 20 --pickers 4 --capacity 30 --scenario double_block --output data/synthetic/my_run.json
 
-### Chọn dữ liệu khác
+# 2. Chạy thuật toán giải (ALNS, VNS, LNS, B0)
+python -m warehouse_opt solve data/synthetic/my_run.json --method ALNS --seconds 5 --output results/my_solution.json
 
-| Nguồn dữ liệu | Cách dùng |
-|---|---|
-| Kris — benchmark tác giả | Chọn một bộ trong **Bộ dữ liệu Kris**, rồi bấm **Chạy tối ưu** |
-| JSON tải lên | Chọn nguồn này và tải file đúng [định dạng JSON của dự án](docs/SCHEMA.md) |
-| Dữ liệu tổng hợp — chỉ kiểm thử | Nguồn mặc định; tự tạo dữ liệu từ số đơn, số nhân viên, sức chứa và độ nới hạn |
-
-**Số đơn, số nhân viên, sức chứa và độ nới hạn chỉ hiện khi dùng dữ liệu tổng hợp.** Với Kris hoặc JSON tải lên, các giá trị này được lấy từ file. Seed, ngân sách và thuật toán nằm trong **Nâng cao**.
-
-Dữ liệu tổng hợp dùng mét/phút. Kris giữ nguyên đơn vị nguồn, không tự quy đổi sang mét/phút. Kết quả Kris sử dụng mục tiêu hạn mềm của dự án, không phải điểm đối chiếu trực tiếp với bài toán hạn cứng của tác giả.
-
-## 3. Lỗi thường gặp
-
-| Hiện tượng | Cách xử lý |
-|---|---|
-| `python` không được nhận diện hoặc mở Microsoft Store | Thử `py --version`. Nếu có Python từ 3.10, dùng `py -m venv .venv` ở bước tạo môi trường. Nếu chưa có, cài Python và mở lại terminal |
-| Không tìm thấy `requirements.txt` hoặc `demo/app.py` | Chuyển vào đúng thư mục `TTUD_v2` trước khi chạy |
-| `No module named streamlit` | Chạy lại `.venv\Scripts\python.exe -m pip install -r requirements.txt`, rồi mở ứng dụng bằng đúng Python trong `.venv` |
-| PowerShell chặn script / `Activate.ps1` | Mở terminal bằng **Command Prompt (CMD)** trong VS Code để tránh bị chặn ExecutionPolicy, hoặc dùng trực tiếp `.venv\Scripts\python.exe` |
-| Trình duyệt không tự mở | Sao chép địa chỉ `Local URL` từ terminal vào trình duyệt |
-| Cổng 8501 đang được sử dụng | Thêm `--server.port 8502` vào cuối lệnh mở Streamlit, rồi truy cập `http://localhost:8502` |
-| Chưa có catalog Kris | Chọn **Dữ liệu tổng hợp — chỉ kiểm thử** để chạy ngay; xem [hướng dẫn dữ liệu](data/README.md) để chuẩn bị Kris |
-| Không thấy nút mở lần chạy đã lưu | Nút chỉ hiện khi có `results/demo_vns/snapshot.json`; vẫn có thể chạy trực tiếp bình thường |
-| Chạy lâu | Thử 10 đơn tổng hợp, giảm ngân sách mỗi search và bỏ chọn chạy thêm thuật toán. Ngân sách áp dụng riêng cho từng search, không phải toàn bộ lần chạy |
-| JSON bị từ chối | Kiểm tra [schema](docs/SCHEMA.md): SKU/vị trí phải tồn tại, kho phải liên thông và mỗi đơn phải vừa sức chứa xe |
-
-## 4. Chạy bằng dòng lệnh (tùy chọn)
-
-Các lệnh dưới đây chạy tại thư mục `TTUD_v2`, sau khi đã kích hoạt môi trường (`.venv\Scripts\activate`). Không cần mở Streamlit.
-
-### Tạo dữ liệu → tối ưu → kiểm tra kết quả
-
-```cmd
-.venv\Scripts\activate
-python -m warehouse_opt generate --orders 10 --pickers 3 --capacity 20 --seed 42 --output data/synthetic/first_run.json
-python -m warehouse_opt solve data/synthetic/first_run.json --method ALNS --seconds 3 --output results/first_run.json
-python -m warehouse_opt validate data/synthetic/first_run.json results/first_run.json
+# 3. Kiểm định độc lập nghiệm (Tải trọng, Tuyến đi, Thời hạn giao)
+python -m warehouse_opt validate data/synthetic/my_run.json results/my_solution.json
 ```
 
-Sau khi chạy:
+---
 
-- `data/synthetic/first_run.json` chứa dữ liệu đầu vào.
-- `results/first_run.json` chứa tuyến, lịch, các đơn và chỉ số kết quả.
-- Lệnh cuối in `VALID: ...` nếu kết quả vượt qua kiểm tra độc lập.
+## 🧠 Tổng quan Thuật toán Metaheuristic
 
-Các thư mục đầu ra được tạo tự động. Chạy lại cùng đường dẫn sẽ ghi đè file đó; đổi tên sau `--output` nếu muốn giữ kết quả cũ.
+Bài toán giải quyết hàm mục tiêu tổng hợp $F$:
 
-### Thông số thường dùng
+$$\min F = w_1 \cdot \text{Distance} + w_2 \cdot \text{Makespan} + w_3 \cdot \text{Tardiness}$$
 
-| Thông số | Ý nghĩa |
-|---|---|
-| `--orders 10` | Số đơn khi tạo dữ liệu tổng hợp |
-| `--pickers 3` | Số nhân viên khi tạo dữ liệu tổng hợp |
-| `--capacity 20` | Sức chứa mỗi chuyến khi tạo dữ liệu tổng hợp |
-| `--method ALNS` | Thuật toán giải; có thể đổi thành `VNS`, `B0` hoặc các tên bên dưới |
-| `--seconds 3` | Ngân sách tìm kiếm; thời gian thực tế còn phụ thuộc khởi tạo và thao tác đang chạy |
-| `--seed 42` | Seed điều khiển lựa chọn ngẫu nhiên |
-| `--seconds 0 --iterations 150` | Dừng theo số vòng, giúp tái lập plan/chỉ số với cùng dữ liệu, seed và phiên bản |
-| `--weights 0.2 0.2 0.6` | Trọng số quãng đường, makespan, độ trễ; phải dương và tổng bằng 1 |
+Hệ thống cung cấp đầy đủ các thuật toán từ cơ sở đến nâng cao:
+* **B0 – B3 (Constructive Baselines):** Gom chuyến tuần tự / theo khoảng cách tăng thêm, kết hợp cải tiến cục bộ 2-Opt và hoán vị lịch.
+* **LNS (Large Neighborhood Search):** Phá hủy một phần nghiệm (Shaw removal, Worst removal, Random removal) và tái thiết kế nghiệm (Greedy repair, Regret repair).
+* **ALNS (Adaptive LNS):** Tự động điều chỉnh xác suất chọn toán tử phá hủy và tái thiết dựa trên lịch sử cải thiện hàm mục tiêu qua cơ chế Roulette Wheel.
+* **VNS (Variable Neighborhood Search):** Khám phá không gian nghiệm bằng cách chuyển đổi tuần tự giữa các cấu trúc lân cận khác nhau (Shift đơn, Swap chuyến, Đổi nhân viên).
 
-Xem đầy đủ tùy chọn:
+---
 
-```cmd
-python -m warehouse_opt --help
-python -m warehouse_opt solve --help
-```
+## 🧪 Kiểm thử và Đảm bảo chất lượng
 
-### Các thuật toán có sẵn
+Dự án sở hữu bộ kiểm thử tự động toàn diện với **123 bài kiểm tra `pytest`** bao phủ:
+- Tính hợp lệ của cấu trúc đồ thị kho và thuật toán tìm đường Dijkstra.
+- Các toán tử phá hủy / tái thiết trong ALNS và lân cận VNS.
+- Ràng buộc tải trọng xe, tính đơn trễ và thời gian hoàn tất.
+- Trình dựng mô phỏng động 60fps và xử lý chuẩn hóa đơn vị đo lường.
 
-| Tên | Mô tả ngắn |
-|---|---|
-| B0 | Gom theo thứ tự nhận đơn, đi tới vị trí gần nhất và xếp lịch; làm mốc so sánh |
-| B1 | Gom đơn theo phần quãng đường tăng thêm |
-| B2 | B1, thêm cải tiến tuyến bằng 2-Opt |
-| B3 | B2, thêm cải tiến lịch làm việc |
-| LNS | Tháo một phần phương án rồi ghép lại để tìm phương án tốt hơn |
-| ALNS | LNS với tần suất sử dụng các thao tác được điều chỉnh theo hiệu quả |
-| VNS | Tìm kiếm bằng nhiều kiểu thay đổi đơn, chuyến và lịch |
-| ALNS_NO_SCHEDULE | ALNS bỏ bước cải tiến cục bộ trên lịch; bước ghép lại vẫn có thể đổi lịch |
-| ALNS_NO_2OPT | ALNS không dùng 2-Opt |
-| B-S | Đi theo chính sách S-Shape; cần kho một block có cấu trúc tương thích |
-
-## 5. Kiểm thử và tài liệu thêm
-
-### Đóng góp và thực nghiệm ALNS
-
-Đề tài đề xuất cách áp dụng **ALNS tích hợp với bộ giải mã tuyến heuristic** cho
-bài toán gom đơn, định tuyến và lập lịch nhiều picker có xét hạn hoàn thành.
-ALNS là khung thuật toán có sẵn. Phần triển khai thiết kế nghiệm, destroy/repair
-theo mục tiêu chung và các phép cải tiến lịch; tuyến được giải mã bằng NN + 2-Opt.
-
-[Quy trình nghiên cứu có khóa dữ liệu và cấu hình](docs/RESEARCH_PROTOCOL.md)
-định nghĩa tuning, holdout, ablation, độ nhạy trọng số và exact gap.
-[Báo cáo đợt 19/09](results/research_20260919/REPORT.md) trình bày cả ca thắng/thua.
-Mỗi run hiện ghi số vòng, trạng thái dừng, thời gian khởi tạo/search và số vòng
-đã sử dụng trọng số thích nghi. Kết quả 0 vòng chỉ phản ánh khởi tạo;
-cập nhật trọng số ở cuối lần chạy chưa chứng minh đã sử dụng trọng số đó.
-
-Ngân sách `seconds` vẫn tính **khởi tạo + search** cho mọi phương pháp.
-`timing.optimization_seconds` giữ ý nghĩa này; `initialization_seconds` và
-`search_seconds` giúp phân tích từng phần. Tổng wall time còn bao gồm
-graph/B0 tham chiếu, xuất chi tiết và validation. Đây là giới hạn mềm giữa các
-thao tác, không phải thời gian cắt cứng.
-
-Chạy bộ kiểm thử:
-
-```cmd
+Chạy toàn bộ test suite:
+```bash
 pytest -q
 ```
 
-Chạy benchmark mẫu và kiểm tra các kết quả vừa tạo:
+---
 
-```cmd
-python -m warehouse_opt benchmark --config configs/smoke.json --output results/my_smoke
-python scripts/check_results.py results/my_smoke
-```
-
-Benchmark chạy nhiều bộ dữ liệu/thuật toán nên lâu hơn một lần demo. Kết quả nằm trong `results/my_smoke`, gồm `REPORT.md`, `runs.csv`, `summary.json` và các nghiệm JSON. Tên các bộ dữ liệu trong một benchmark phải khác nhau.
-
-Các tài liệu chi tiết:
-
-- [Định dạng dữ liệu JSON](docs/SCHEMA.md)
-- [Nguồn và cách chuẩn bị dữ liệu Kris](data/README.md)
-- [Ghi chú kiểm chứng và kết quả thực nghiệm](docs/VALIDATION.md)
-- [Thiết kế giao diện](docs/DESIGN.md)
-- [Kế hoạch và trạng thái nâng cấp](docs/demo-upgrade-plan.md)
-- [Đánh giá tổng quan và khả năng đạt điểm cao](docs/DANH_GIA_TONG_QUAN_DU_AN.md)
-- [Quyết định file đưa lên GitHub](docs/GITHUB_UPLOAD_GUIDE.md)
-- [Mô hình, ví dụ tính tay và kịch bản bảo vệ](docs/MODEL_AND_DEFENSE.md)
-- [Thực nghiệm đối chứng bổ sung](docs/EVIDENCE_UPGRADE.md)
-- [Cẩm nang tinh tuý thiết kế & phân tích thuật toán](docs/TOM_TAT_THIET_KE_VA_PHAN_TICH_THUAT_TOAN.md)
-
-### Các thư mục chính
+## 📁 Cấu trúc thư mục dự án
 
 ```text
 TTUD_v2/
-  demo/app.py       Giao diện trình duyệt Streamlit
-  warehouse_opt/    Thuật toán và package cốt lõi
-  data/             Dữ liệu đầu vào (synthetic, Kris)
-  results/          Kết quả chạy benchmark
-  configs/          Cấu hình benchmark JSON
-  tests/            Bộ 112 tests kiểm thử
-  docs/             Tất cả tài liệu chi tiết (.md)
-  Tai_lieu/         Tài liệu slide bài giảng môn học
-  output/           Thư mục xuất kết quả bổ sung
+├── demo/                       # Ứng dụng Web Streamlit & Mô phỏng Digital Twin
+│   ├── app.py                  # Entrypoint chính của giao diện
+│   ├── components.py           # Các thẻ chỉ số, bảng kết quả, biểu đồ
+│   ├── simulation.py           # Trình mô phỏng HTML5 Canvas 60fps
+│   └── state.py                # Quản lý trạng thái và luồng thực thi
+├── warehouse_opt/              # Package thuật toán cốt lõi
+│   ├── generator.py            # 5 kịch bản kho & sinh dữ liệu ABC
+│   ├── models.py               # Cấu trúc dữ liệu: Instance, Order, Batch...
+│   ├── graph.py                # Đồ thị kho, tìm đường ngắn nhất
+│   ├── routing.py              # Định tuyến S-Shape, Return, 2-Opt
+│   ├── search.py               # Thuật toán ALNS & LNS
+│   ├── vns.py                  # Thuật toán VNS
+│   ├── heuristics.py           # Các thuật toán cơ sở B0, B1, B2, B3
+│   ├── validator.py            # Bộ kiểm định nghiệm độc lập
+│   └── units.py                # Chuẩn hóa đơn vị đo lường
+├── data/                       # Dữ liệu mẫu (Synthetic) & Kris Benchmark
+├── results/                    # Kết quả chạy thực nghiệm và báo cáo
+├── tests/                      # 123 bài kiểm thử tự động với pytest
+└── docs/                       # Tài liệu thiết kế, mô hình toán & hướng dẫn bảo vệ
 ```
 
-### Phạm vi mô hình
+---
 
-Mô hình có một điểm xuất phát/trả hàng, nhân viên có cùng năng lực và tất cả đơn sẵn sàng từ đầu. Mỗi đơn nằm trọn trong một chuyến; đơn hoàn thành khi chuyến quay về và bàn giao xong. Chưa mô phỏng tắc nghẽn, tránh va chạm hoặc ca làm việc. Các thuật toán tìm kiếm không bảo đảm tìm được phương án tối ưu tuyệt đối.
+## 📜 Giấy phép & Thông tin liên hệ
+
+Dự án phục vụ mục đích học tập, nghiên cứu và báo cáo đồ án môn học **Thuật toán ứng dụng (TTUD)**. Mọi đóng góp và thắc mắc vui lòng liên hệ tác giả qua repository này.
