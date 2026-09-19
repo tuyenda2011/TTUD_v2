@@ -30,3 +30,9 @@ Thumbs.db
 
 # Legacy generated output at repository root
 /output/
+
+# Results and test directories
+result/
+results/
+test/
+tests/

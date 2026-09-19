@@ -1,5 +1,9 @@
 # Kế hoạch cải tiến Warehouse Joint Optimizer
 
+> Lưu trữ kế hoạch ban đầu; checkbox bên dưới không phản ánh trạng thái hiện tại.
+> VNS và giao diện mới đã được triển khai. Xem `demo-upgrade-plan.md`,
+> `docs/EVIDENCE_UPGRADE.md` và `DANH_GIA_TONG_QUAN_DU_AN.md` để theo dõi hiện trạng.
+
 Mục tiêu: demo warehouse ổn định, cải thiện hiệu năng có đo lường và bổ sung VNS làm đối chứng cho ALNS. Giữ mô hình hiện tại: một depot, picker đồng nhất, đơn sẵn sàng ở t=0, capacity và deadline mềm. Đây là kế hoạch, chưa triển khai thuật toán mới.
 
 ## Thuật toán bổ sung: VNS

@@ -1,0 +1,8 @@
+{
+  "sizes": [10, 30, 100],
+  "instance_seeds": [901, 902, 903],
+  "search_seeds": [7, 42, 101],
+  "methods": ["B0", "B2", "B3", "LNS", "ALNS", "VNS", "ALNS_NO_SCHEDULE", "ALNS_NO_2OPT"],
+  "generator": {"pickers": 3, "capacity": 30, "aisles": 5, "rows": 6, "tightness": 0.15},
+  "search": {"seconds": 0.5, "iterations": 2000, "candidate_limit": 24}
+}

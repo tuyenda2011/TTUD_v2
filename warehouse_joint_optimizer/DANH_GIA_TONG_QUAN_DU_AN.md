@@ -6,6 +6,26 @@
 
 ## 1. Kết luận thẳng
 
+### Cập nhật triển khai ngày 17/09/2026
+
+Đã bổ sung thống kê thắng/hòa/thua so với B0/B2/B3, lấy trung bình seed
+trong từng instance trước để không đếm lặp bằng chứng. Cấu hình đánh giá mới
+gồm 9 instance tổng hợp, 8 phương pháp/biến thể và 180 lần giải.
+Xem [báo cáo bổ sung](docs/EVIDENCE_UPGRADE.md) và
+[bảng kết quả](results/evidence_test/REPORT.md).
+
+Đã thêm công cụ kiểm tra lại nghiệm và đóng gói archive kèm SHA-256;
+[mô hình, ví dụ tính tay và kịch bản bảo vệ](docs/MODEL_AND_DEFENSE.md).
+Kiểm chứng mới: **106 test đạt**, bản sao sạch **96 đạt, 10 bỏ qua** do không
+kèm dữ liệu tác giả. **180/180 nghiệm** trong benchmark mới được kiểm tra lại.
+Kế hoạch VNS cũ đã được ghi rõ là tài liệu lịch sử.
+Các số 102 test và benchmark 96 nghiệm bên dưới là mốc ngày 16/09,
+không phải kết quả của đợt thực nghiệm mới.
+
+Chưa hoàn tất tuning độc lập, độ nhạy trọng số, exact gap mở rộng hoặc thử
+ba người dùng thật. Các cải tiến trên tăng khả năng kiểm toán và chất lượng
+trình bày; không biến dự án thành đóng góp thuật toán mới hoặc bảo đảm điểm số.
+
 **Có, đề tài phù hợp và khả thi để hướng tới điểm cao trong một đồ án thuật toán ứng dụng/tối ưu tổ hợp.** Dự án đã vượt mức “chạy một thuật toán rồi vẽ hình”: có mô hình kết hợp nhiều quyết định, baseline, hai hướng tìm kiếm, kiểm chứng nghiệm độc lập, oracle cho bài toán nhỏ, dữ liệu benchmark và ứng dụng chạy được.
 
 **Tuy nhiên, chưa nên coi là đã chắc chắn đạt mức xuất sắc.** Những thiếu hụt chính hiện nay là bằng chứng thực nghiệm đủ rộng, báo cáo học thuật thống nhất với code, phân tích vì sao phương pháp tốt/xấu và khả năng tự giải thích khi bảo vệ. Giao diện đẹp hơn giúp trình bày, nhưng không thay thế các phần này.

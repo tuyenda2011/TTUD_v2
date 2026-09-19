@@ -4,6 +4,13 @@ Tài liệu này chốt phạm vi public cho dự án `warehouse_joint_optimizer
 
 ## Nên đưa lên GitHub
 
+Đợt bổ sung bằng chứng: giữ `configs/evidence_test.json`,
+`docs/EVIDENCE_UPGRADE.md`, `docs/MODEL_AND_DEFENSE.md`, script đóng gói,
+test và `results/evidence_test/{REPORT.md,config.json,summary.json,comparison.json,runs.csv}`.
+Archive `results/submission/evidence_test.zip` và checksum giữ local để đính kèm
+khi nộp; không cần đưa vào Git. `warehouse-improvement-plan.md` đã được gắn nhãn
+lịch sử; chỉ giữ nếu muốn lưu diễn tiến, không dùng làm đặc tả hiện hành.
+
 - Mã nguồn: `warehouse_opt/`, `demo/`, `tests/`, `scripts/`, `configs/`.
 - Tài liệu: `README.md`, `DESIGN.md`, `demo-upgrade-plan.md`, `DANH_GIA_TONG_QUAN_DU_AN.md`, `docs/`, `data/README.md`.
 - Cấu hình và môi trường: `pyproject.toml`, `requirements.txt`, `.gitignore`, `.streamlit/config.toml`.
@@ -18,7 +25,7 @@ Tài liệu này chốt phạm vi public cho dự án `warehouse_joint_optimizer
 - Output thô, profile, log, screenshot audit và file tải xuống trong `results/**/raw/`, `results/**/profile*/`, `results/ui_audit/`.
 - Các file cá nhân hoặc sinh tự động như `.env`, secret, cache, `.venv/`, `__pycache__/`, `.pytest_cache/`, `.ruff_cache/`, `build/`, `dist/`.
 - `results/**/manifest.json` nếu còn đường dẫn máy local, tên môi trường hoặc trạng thái working tree; Git đang ignore các file này, chỉ dùng `git add -f` sau khi đã làm sạch nếu thật sự cần công khai.
-- `warehouse-improvement-plan.md` hiện là kế hoạch cũ, còn checkbox chưa cập nhật; chỉ đưa lên sau khi đã đồng bộ với trạng thái thực tế.
+- Không dùng checkbox lịch sử trong `warehouse-improvement-plan.md` làm trạng thái nghiệm thu; đầu file đã dẫn tới tài liệu hiện hành.
 
 `.gitignore` của project đã bỏ qua raw/processed data theo chính sách trên. Việc bỏ qua không xóa file local và không ảnh hưởng việc chạy benchmark trên máy đã có dữ liệu.
 

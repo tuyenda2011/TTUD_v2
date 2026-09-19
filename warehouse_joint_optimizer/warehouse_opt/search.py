@@ -1,8 +1,8 @@
 """ALNS with full-objective insertion and explicit assignment/sequence neighborhoods."""
-from dataclasses import asdict, dataclass
 import math
 import random
 import time
+from dataclasses import asdict, dataclass
 
 from .heuristics import freeze, mutable
 from .models import InputError, number
@@ -26,8 +26,17 @@ class SearchConfig:
     local_trials: int = 8
     local_every: int = 5
     cache_limit: int = 10000  # entries per cache; 0 is unbounded
+    destroy_operators: tuple[str, ...] = ("random", "related", "late", "batch")
+    repair_operators: tuple[str, ...] = ("greedy", "regret2")
 
     def validate(self):
+        for key, allowed in (("destroy_operators", {"random", "related", "late", "batch"}),
+                             ("repair_operators", {"greedy", "regret2"})):
+            values = getattr(self, key)
+            if (not isinstance(values, (tuple, list)) or not values
+                    or any(not isinstance(v, str) or v not in allowed for v in values)
+                    or len(values) != len(set(values))):
+                raise InputError(f"{key} must be a nonempty list of unique supported operators")
         for key in ("iterations", "max_removed", "segment", "local_every"):
             value = getattr(self, key)
             if type(value) is not int or value < 1:
@@ -166,7 +175,8 @@ def local_search(ctx, plan, rng, trials, mode, deadline, schedule=True, orders=F
     cost = ctx.cost(plan, mode)
     for _ in range(trials):
         deadline_check(deadline)
-        if orders and (not schedule or rng.random() < .5):
+        choose_order = orders and rng.random() < .5
+        if choose_order:
             candidate = order_neighbor(ctx, plan, rng)
         elif schedule:
             candidate = schedule_neighbor(plan, rng)
@@ -186,7 +196,7 @@ def optimize(ctx, initial, seed=42, config=None, adaptive=True, schedule=True, m
     rng = random.Random(seed)
     current = best = initial
     current_cost = best_cost = ctx.cost(initial, mode)
-    destroy_names, repair_names = ["random", "related", "late", "batch"], ["greedy", "regret2"]
+    destroy_names, repair_names = config.destroy_operators, config.repair_operators
     weights = {name: 1. for name in destroy_names + repair_names}
     uses = {name: 0 for name in weights}
     segment_uses = uses.copy()
@@ -194,11 +204,12 @@ def optimize(ctx, initial, seed=42, config=None, adaptive=True, schedule=True, m
     temperature = config.temperature
     trace = [{"iteration": 0, "seconds": 0., "objective": best_cost}]
     accepted, iterations, stopped = 0, 0, "iterations"
+    adaptation_updates, adapted_iterations = 0, 0
 
     def adapt():
-        for name in weights:
+        for name, weight in weights.items():
             if adaptive and segment_uses[name]:
-                weights[name] = max(.05, (1 - config.reaction) * weights[name] + config.reaction * scores[name] / segment_uses[name])
+                weights[name] = max(.05, (1 - config.reaction) * weight + config.reaction * scores[name] / segment_uses[name])
             segment_uses[name], scores[name] = 0, 0.
 
     for iteration in range(1, config.iterations + 1):
@@ -215,6 +226,8 @@ def optimize(ctx, initial, seed=42, config=None, adaptive=True, schedule=True, m
             stopped = "time_limit"
             break
         iterations = iteration
+        if adaptive and adaptation_updates:
+            adapted_iterations += 1
         delta = candidate_cost - current_cost
         accept = delta <= 0 or rng.random() < math.exp(-delta / max(temperature, 1e-12))
         reward = 0.
@@ -231,8 +244,15 @@ def optimize(ctx, initial, seed=42, config=None, adaptive=True, schedule=True, m
             scores[name] += reward
         if iteration % config.segment == 0:
             adapt()
+            if adaptive:
+                adaptation_updates += 1
         temperature *= config.cooling
     adapt()
     ctx.check_plan(best)
     trace.append({"iteration": iterations, "seconds": time.perf_counter() - started, "objective": best_cost})
-    return best, {"seed": seed, "config": asdict(config), "adaptive": adaptive, "schedule_neighborhoods": schedule, "iterations_completed": iterations, "accepted": accepted, "stop_reason": stopped, "operator_weights": weights, "operator_uses": uses, "trace": trace}
+    return best, {"seed": seed, "config": asdict(config), "adaptive": adaptive,
+                  "schedule_neighborhoods": schedule, "iterations_completed": iterations,
+                  "adaptation_updates": adaptation_updates,
+                  "adapted_iterations": adapted_iterations, "accepted": accepted,
+                  "stop_reason": stopped, "operator_weights": weights,
+                  "operator_uses": uses, "trace": trace}

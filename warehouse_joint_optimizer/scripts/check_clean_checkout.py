@@ -27,7 +27,8 @@ def main():
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, target)
         copied += 1
-    completed = subprocess.run([sys.executable, "-m", "pytest", "-q", "--tb=short"],
+    completed = subprocess.run([sys.executable, "-m", "pytest", "-q", "--tb=short", "-p", "no:cacheprovider",
+                                "--basetemp", str(destination / ".pytest-work")],
                                cwd=destination, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     report = {"python": sys.executable, "directory": str(destination), "files": copied,
               "exit_code": completed.returncode, "stdout": completed.stdout, "stderr": completed.stderr}

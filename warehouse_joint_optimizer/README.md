@@ -1,4 +1,4 @@
-﻿# Warehouse Joint Optimizer
+# Warehouse Joint Optimizer
 
 Ứng dụng thử nghiệm giúp **gom đơn hàng thành từng chuyến, tìm đường lấy hàng và chia lịch cho nhân viên trong kho**. Bạn có thể xem sơ đồ đường đi, lịch làm việc và các đơn bị trễ ngay trên trình duyệt.
 
@@ -23,21 +23,24 @@ Nếu dùng `TTUD`, bỏ qua bước tạo `.venv` bên dưới và dùng `pytho
 
 - Cài **Python 3.10 trở lên**; Python 3.12 là lựa chọn phù hợp để bắt đầu. Khi cài trên Windows, chọn **Add Python to PATH**.
 - Có kết nối Internet để tải thư viện trong lần cài đầu tiên.
-- Các lệnh bên dưới dùng **PowerShell trên Windows**. Chạy lần lượt từng dòng.
+- Các lệnh bên dưới dùng **Command Prompt (CMD) trong VS Code** trên Windows. Chạy lần lượt từng dòng.
 
-### Bước 1 — Mở đúng thư mục
+### Bước 1 — Mở terminal CMD trong VS Code và vào đúng thư mục
 
-Mở PowerShell và chuyển vào thư mục chứa `requirements.txt` và `demo`:
+Trong VS Code:
+1. Mở menu **Terminal → New Terminal** (hoặc nhấn phím tắt ``Ctrl + ` ``).
+2. Nhấp vào biểu tượng mũi tên `v` cạnh dấu `+` ở góc trên thanh Terminal, chọn **Command Prompt** (hoặc `cmd`).
+3. Chuyển vào thư mục chứa `requirements.txt` và `demo`:
 
-```powershell
-cd <duong-dan-toi>\warehouse_joint_optimizer
+```cmd
+cd /d d:\TTUD_v2\warehouse_joint_optimizer
 ```
 
-Nếu bạn lưu dự án ở nơi khác, thay đường dẫn trên bằng đường dẫn của bạn. Trong VS Code, bạn cũng có thể mở thư mục `warehouse_joint_optimizer`, rồi chọn **Terminal → New Terminal**.
+*(Nếu bạn lưu dự án ở vị trí khác, hãy thay bằng đường dẫn thực tế của bạn. Tham số `/d` trong CMD giúp chuyển đổi đúng giữa các ổ đĩa như C: và D:).*
 
 Kiểm tra Python:
 
-```powershell
+```cmd
 python --version
 ```
 
@@ -45,30 +48,32 @@ Bạn cần thấy kết quả dạng `Python 3.12.x` (hoặc phiên bản từ 
 
 ### Bước 2 — Cài thư viện (chỉ cần làm lần đầu)
 
-```powershell
+```cmd
 python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\activate
+pip install -r requirements.txt
 ```
 
-`.venv` là môi trường Python riêng của dự án. Chờ lệnh cài đặt kết thúc rồi mới chạy bước tiếp theo. Các lệnh dùng trực tiếp Python trong `.venv`, nên **không cần chạy lệnh activate**.
+Sau khi chạy `.venv\Scripts\activate`, bạn sẽ thấy chữ `(.venv)` xuất hiện ở đầu dòng lệnh, báo hiệu môi trường ảo đã sẵn sàng.
 
 ### Bước 3 — Mở giao diện
 
-```powershell
-.\.venv\Scripts\python.exe -m streamlit run demo/app.py
+```cmd
+streamlit run demo/app.py
 ```
 
-Trình duyệt thường tự mở. Nếu chưa mở, truy cập **http://localhost:8501** hoặc địa chỉ `Local URL` xuất hiện trong terminal.
+Trình duyệt sẽ tự động mở giao diện ứng dụng. Nếu chưa mở, truy cập **http://localhost:8501** hoặc địa chỉ `Local URL` hiển thị trong terminal.
 
 **Giữ terminal mở khi sử dụng ứng dụng.** Muốn dừng, quay lại terminal và nhấn `Ctrl+C`.
 
 ### Những lần mở sau
 
-Không cần cài lại thư viện. Chỉ chạy:
+Không cần cài lại thư viện. Mỗi khi mở VS Code, chỉ cần gõ 2 dòng:
 
-```powershell
-cd <duong-dan-toi>\warehouse_joint_optimizer
-.\.venv\Scripts\python.exe -m streamlit run demo/app.py
+```cmd
+cd /d d:\TTUD_v2\warehouse_joint_optimizer
+.venv\Scripts\activate
+streamlit run demo/app.py
 ```
 
 <details>
@@ -78,11 +83,10 @@ Mở terminal tại thư mục `warehouse_joint_optimizer`, rồi chạy:
 
 ```bash
 python3 -m venv .venv
-./.venv/bin/python -m pip install -r requirements.txt
-./.venv/bin/python -m streamlit run demo/app.py
+source .venv/bin/activate
+pip install -r requirements.txt
+streamlit run demo/app.py
 ```
-
-Với các ví dụ Windows bên dưới, thay `.\.venv\Scripts\python.exe` bằng `./.venv/bin/python`.
 
 </details>
 
@@ -137,8 +141,8 @@ Dữ liệu tổng hợp dùng mét/phút. Kris giữ nguyên đơn vị nguồn
 |---|---|
 | `python` không được nhận diện hoặc mở Microsoft Store | Thử `py --version`. Nếu có Python từ 3.10, dùng `py -m venv .venv` ở bước tạo môi trường. Nếu chưa có, cài Python và mở lại terminal |
 | Không tìm thấy `requirements.txt` hoặc `demo/app.py` | Chuyển vào đúng thư mục `warehouse_joint_optimizer` trước khi chạy |
-| `No module named streamlit` | Chạy lại `.\.venv\Scripts\python.exe -m pip install -r requirements.txt`, rồi mở ứng dụng bằng đúng Python trong `.venv` |
-| PowerShell chặn `Activate.ps1` | Không cần activate; dùng nguyên các lệnh `.\.venv\Scripts\python.exe` ở trên |
+| `No module named streamlit` | Chạy lại `.venv\Scripts\python.exe -m pip install -r requirements.txt`, rồi mở ứng dụng bằng đúng Python trong `.venv` |
+| PowerShell chặn script / `Activate.ps1` | Mở terminal bằng **Command Prompt (CMD)** trong VS Code để tránh bị chặn ExecutionPolicy, hoặc dùng trực tiếp `.venv\Scripts\python.exe` |
 | Trình duyệt không tự mở | Sao chép địa chỉ `Local URL` từ terminal vào trình duyệt |
 | Cổng 8501 đang được sử dụng | Thêm `--server.port 8502` vào cuối lệnh mở Streamlit, rồi truy cập `http://localhost:8502` |
 | Chưa có catalog Kris | Chọn **Dữ liệu tổng hợp — chỉ kiểm thử** để chạy ngay; xem [hướng dẫn dữ liệu](data/README.md) để chuẩn bị Kris |
@@ -148,14 +152,15 @@ Dữ liệu tổng hợp dùng mét/phút. Kris giữ nguyên đơn vị nguồn
 
 ## 4. Chạy bằng dòng lệnh (tùy chọn)
 
-Các lệnh dưới đây chạy tại thư mục `warehouse_joint_optimizer`, sau bước cài đặt ở mục 1. Không cần mở Streamlit.
+Các lệnh dưới đây chạy tại thư mục `warehouse_joint_optimizer`, sau khi đã kích hoạt môi trường (`.venv\Scripts\activate`). Không cần mở Streamlit.
 
 ### Tạo dữ liệu → tối ưu → kiểm tra kết quả
 
-```powershell
-.\.venv\Scripts\python.exe -m warehouse_opt generate --orders 10 --pickers 3 --capacity 20 --seed 42 --output data/synthetic/first_run.json
-.\.venv\Scripts\python.exe -m warehouse_opt solve data/synthetic/first_run.json --method ALNS --seconds 3 --output results/first_run.json
-.\.venv\Scripts\python.exe -m warehouse_opt validate data/synthetic/first_run.json results/first_run.json
+```cmd
+.venv\Scripts\activate
+python -m warehouse_opt generate --orders 10 --pickers 3 --capacity 20 --seed 42 --output data/synthetic/first_run.json
+python -m warehouse_opt solve data/synthetic/first_run.json --method ALNS --seconds 3 --output results/first_run.json
+python -m warehouse_opt validate data/synthetic/first_run.json results/first_run.json
 ```
 
 Sau khi chạy:
@@ -181,9 +186,9 @@ Các thư mục đầu ra được tạo tự động. Chạy lại cùng đư�
 
 Xem đầy đủ tùy chọn:
 
-```powershell
-.\.venv\Scripts\python.exe -m warehouse_opt --help
-.\.venv\Scripts\python.exe -m warehouse_opt solve --help
+```cmd
+python -m warehouse_opt --help
+python -m warehouse_opt solve --help
 ```
 
 ### Các thuật toán có sẵn
@@ -203,17 +208,37 @@ Xem đầy đủ tùy chọn:
 
 ## 5. Kiểm thử và tài liệu thêm
 
+### Đóng góp và thực nghiệm ALNS
+
+Đề tài đề xuất cách áp dụng **ALNS tích hợp với bộ giải mã tuyến heuristic** cho
+bài toán gom đơn, định tuyến và lập lịch nhiều picker có xét hạn hoàn thành.
+ALNS là khung thuật toán có sẵn. Phần triển khai thiết kế nghiệm, destroy/repair
+theo mục tiêu chung và các phép cải tiến lịch; tuyến được giải mã bằng NN + 2-Opt.
+
+[Quy trình nghiên cứu có khóa dữ liệu và cấu hình](docs/RESEARCH_PROTOCOL.md)
+định nghĩa tuning, holdout, ablation, độ nhạy trọng số và exact gap.
+[Báo cáo đợt 19/09](results/research_20260919/REPORT.md) trình bày cả ca thắng/thua.
+Mỗi run hiện ghi số vòng, trạng thái dừng, thời gian khởi tạo/search và số vòng
+đã sử dụng trọng số thích nghi. Kết quả 0 vòng chỉ phản ánh khởi tạo;
+cập nhật trọng số ở cuối lần chạy chưa chứng minh đã sử dụng trọng số đó.
+
+Ngân sách `seconds` vẫn tính **khởi tạo + search** cho mọi phương pháp.
+`timing.optimization_seconds` giữ ý nghĩa này; `initialization_seconds` và
+`search_seconds` giúp phân tích từng phần. Tổng wall time còn bao gồm
+graph/B0 tham chiếu, xuất chi tiết và validation. Đây là giới hạn mềm giữa các
+thao tác, không phải thời gian cắt cứng.
+
 Chạy bộ kiểm thử:
 
-```powershell
-.\.venv\Scripts\python.exe -m pytest -q
+```cmd
+pytest -q
 ```
 
 Chạy benchmark mẫu và kiểm tra các kết quả vừa tạo:
 
-```powershell
-.\.venv\Scripts\python.exe -m warehouse_opt benchmark --config configs/smoke.json --output results/my_smoke
-.\.venv\Scripts\python.exe scripts/check_results.py results/my_smoke
+```cmd
+python -m warehouse_opt benchmark --config configs/smoke.json --output results/my_smoke
+python scripts/check_results.py results/my_smoke
 ```
 
 Benchmark chạy nhiều bộ dữ liệu/thuật toán nên lâu hơn một lần demo. Kết quả nằm trong `results/my_smoke`, gồm `REPORT.md`, `runs.csv`, `summary.json` và các nghiệm JSON. Tên các bộ dữ liệu trong một benchmark phải khác nhau.
@@ -227,6 +252,8 @@ Các tài liệu chi tiết:
 - [Kế hoạch và trạng thái nâng cấp](demo-upgrade-plan.md)
 - [Đánh giá tổng quan và khả năng đạt điểm cao](DANH_GIA_TONG_QUAN_DU_AN.md)
 - [Quyết định file đưa lên GitHub](GITHUB_UPLOAD_GUIDE.md)
+- [Mô hình, ví dụ tính tay và kịch bản bảo vệ](docs/MODEL_AND_DEFENSE.md)
+- [Thực nghiệm đối chứng bổ sung](docs/EVIDENCE_UPGRADE.md)
 
 ### Các thư mục chính
 
