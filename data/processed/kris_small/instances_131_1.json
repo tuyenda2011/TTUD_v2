@@ -1,0 +1,1130 @@
+{
+  "name": "Kris-instances_131_1",
+  "depot": "0",
+  "nodes": [
+    {
+      "id": "0",
+      "x": 0.0,
+      "y": 0.0
+    },
+    {
+      "id": "1",
+      "x": 288.0,
+      "y": 170.0
+    },
+    {
+      "id": "2",
+      "x": 192.0,
+      "y": 794.0
+    },
+    {
+      "id": "3",
+      "x": 48.0,
+      "y": 1037.0
+    },
+    {
+      "id": "4",
+      "x": 144.0,
+      "y": 1011.0
+    },
+    {
+      "id": "5",
+      "x": 144.0,
+      "y": 859.0
+    },
+    {
+      "id": "6",
+      "x": 0.0,
+      "y": 365.0
+    },
+    {
+      "id": "7",
+      "x": 0.0,
+      "y": 1713.0
+    },
+    {
+      "id": "8",
+      "x": 0.0,
+      "y": 326.0
+    },
+    {
+      "id": "9",
+      "x": 0.0,
+      "y": 417.0
+    },
+    {
+      "id": "10",
+      "x": 0.0,
+      "y": 560.0
+    },
+    {
+      "id": "11",
+      "x": 240.0,
+      "y": 1687.0
+    },
+    {
+      "id": "12",
+      "x": 48.0,
+      "y": 768.0
+    },
+    {
+      "id": "13",
+      "x": 48.0,
+      "y": 313.0
+    },
+    {
+      "id": "14",
+      "x": 0.0,
+      "y": 1232.0
+    },
+    {
+      "id": "15",
+      "x": 0.0,
+      "y": 1531.0
+    },
+    {
+      "id": "16",
+      "x": 144.0,
+      "y": 1180.0
+    },
+    {
+      "id": "17",
+      "x": 0.0,
+      "y": 1141.0
+    },
+    {
+      "id": "18",
+      "x": 48.0,
+      "y": 1388.0
+    },
+    {
+      "id": "19",
+      "x": 96.0,
+      "y": 170.0
+    },
+    {
+      "id": "20",
+      "x": 0.0,
+      "y": 404.0
+    },
+    {
+      "id": "21",
+      "x": 0.0,
+      "y": 1752.0
+    },
+    {
+      "id": "22",
+      "x": 0.0,
+      "y": 1193.0
+    },
+    {
+      "id": "23",
+      "x": 384.0,
+      "y": 1466.0
+    },
+    {
+      "id": "24",
+      "x": 240.0,
+      "y": 222.0
+    },
+    {
+      "id": "25",
+      "x": 288.0,
+      "y": 1284.0
+    },
+    {
+      "id": "26",
+      "x": 0.0,
+      "y": 1063.0
+    },
+    {
+      "id": "27",
+      "x": 432.0,
+      "y": 1245.0
+    },
+    {
+      "id": "28",
+      "x": 48.0,
+      "y": 1050.0
+    },
+    {
+      "id": "29",
+      "x": 48.0,
+      "y": 1297.0
+    },
+    {
+      "id": "30",
+      "x": 24.0,
+      "y": 120.0
+    },
+    {
+      "id": "31",
+      "x": 24.0,
+      "y": 961.0
+    },
+    {
+      "id": "32",
+      "x": 24.0,
+      "y": 1802.0
+    },
+    {
+      "id": "33",
+      "x": 72.0,
+      "y": 120.0
+    },
+    {
+      "id": "34",
+      "x": 72.0,
+      "y": 961.0
+    },
+    {
+      "id": "35",
+      "x": 72.0,
+      "y": 1802.0
+    },
+    {
+      "id": "36",
+      "x": 120.0,
+      "y": 120.0
+    },
+    {
+      "id": "37",
+      "x": 120.0,
+      "y": 961.0
+    },
+    {
+      "id": "38",
+      "x": 120.0,
+      "y": 1802.0
+    },
+    {
+      "id": "39",
+      "x": 168.0,
+      "y": 120.0
+    },
+    {
+      "id": "40",
+      "x": 168.0,
+      "y": 961.0
+    },
+    {
+      "id": "41",
+      "x": 168.0,
+      "y": 1802.0
+    },
+    {
+      "id": "42",
+      "x": 216.0,
+      "y": 120.0
+    },
+    {
+      "id": "43",
+      "x": 216.0,
+      "y": 961.0
+    },
+    {
+      "id": "44",
+      "x": 216.0,
+      "y": 1802.0
+    },
+    {
+      "id": "45",
+      "x": 264.0,
+      "y": 120.0
+    },
+    {
+      "id": "46",
+      "x": 264.0,
+      "y": 961.0
+    },
+    {
+      "id": "47",
+      "x": 264.0,
+      "y": 1802.0
+    },
+    {
+      "id": "48",
+      "x": 312.0,
+      "y": 120.0
+    },
+    {
+      "id": "49",
+      "x": 312.0,
+      "y": 961.0
+    },
+    {
+      "id": "50",
+      "x": 312.0,
+      "y": 1802.0
+    },
+    {
+      "id": "51",
+      "x": 360.0,
+      "y": 120.0
+    },
+    {
+      "id": "52",
+      "x": 360.0,
+      "y": 961.0
+    },
+    {
+      "id": "53",
+      "x": 360.0,
+      "y": 1802.0
+    },
+    {
+      "id": "54",
+      "x": 408.0,
+      "y": 120.0
+    },
+    {
+      "id": "55",
+      "x": 408.0,
+      "y": 961.0
+    },
+    {
+      "id": "56",
+      "x": 408.0,
+      "y": 1802.0
+    },
+    {
+      "id": "57",
+      "x": 456.0,
+      "y": 120.0
+    },
+    {
+      "id": "58",
+      "x": 456.0,
+      "y": 961.0
+    },
+    {
+      "id": "59",
+      "x": 456.0,
+      "y": 1802.0
+    },
+    {
+      "id": "60",
+      "x": 504.0,
+      "y": 120.0
+    },
+    {
+      "id": "61",
+      "x": 504.0,
+      "y": 961.0
+    },
+    {
+      "id": "62",
+      "x": 504.0,
+      "y": 1802.0
+    },
+    {
+      "id": "63",
+      "x": 552.0,
+      "y": 120.0
+    },
+    {
+      "id": "64",
+      "x": 552.0,
+      "y": 961.0
+    },
+    {
+      "id": "65",
+      "x": 552.0,
+      "y": 1802.0
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "30",
+      "distance": 120.0
+    },
+    {
+      "source": "1",
+      "target": "48",
+      "distance": 50.0
+    },
+    {
+      "source": "1",
+      "target": "49",
+      "distance": 791.0
+    },
+    {
+      "source": "10",
+      "target": "31",
+      "distance": 401.0
+    },
+    {
+      "source": "10",
+      "target": "9",
+      "distance": 143.0
+    },
+    {
+      "source": "11",
+      "target": "46",
+      "distance": 726.0
+    },
+    {
+      "source": "11",
+      "target": "47",
+      "distance": 115.0
+    },
+    {
+      "source": "12",
+      "target": "13",
+      "distance": 455.0
+    },
+    {
+      "source": "12",
+      "target": "34",
+      "distance": 193.0
+    },
+    {
+      "source": "13",
+      "target": "33",
+      "distance": 193.0
+    },
+    {
+      "source": "14",
+      "target": "15",
+      "distance": 299.0
+    },
+    {
+      "source": "14",
+      "target": "22",
+      "distance": 39.0
+    },
+    {
+      "source": "15",
+      "target": "7",
+      "distance": 182.0
+    },
+    {
+      "source": "16",
+      "target": "4",
+      "distance": 169.0
+    },
+    {
+      "source": "16",
+      "target": "41",
+      "distance": 622.0
+    },
+    {
+      "source": "17",
+      "target": "22",
+      "distance": 52.0
+    },
+    {
+      "source": "17",
+      "target": "26",
+      "distance": 78.0
+    },
+    {
+      "source": "18",
+      "target": "29",
+      "distance": 91.0
+    },
+    {
+      "source": "18",
+      "target": "35",
+      "distance": 414.0
+    },
+    {
+      "source": "19",
+      "target": "36",
+      "distance": 50.0
+    },
+    {
+      "source": "19",
+      "target": "37",
+      "distance": 791.0
+    },
+    {
+      "source": "2",
+      "target": "42",
+      "distance": 674.0
+    },
+    {
+      "source": "2",
+      "target": "43",
+      "distance": 167.0
+    },
+    {
+      "source": "20",
+      "target": "6",
+      "distance": 39.0
+    },
+    {
+      "source": "20",
+      "target": "9",
+      "distance": 13.0
+    },
+    {
+      "source": "21",
+      "target": "32",
+      "distance": 50.0
+    },
+    {
+      "source": "21",
+      "target": "7",
+      "distance": 39.0
+    },
+    {
+      "source": "23",
+      "target": "55",
+      "distance": 505.0
+    },
+    {
+      "source": "23",
+      "target": "56",
+      "distance": 336.0
+    },
+    {
+      "source": "24",
+      "target": "45",
+      "distance": 102.0
+    },
+    {
+      "source": "24",
+      "target": "46",
+      "distance": 739.0
+    },
+    {
+      "source": "25",
+      "target": "49",
+      "distance": 323.0
+    },
+    {
+      "source": "25",
+      "target": "50",
+      "distance": 518.0
+    },
+    {
+      "source": "26",
+      "target": "31",
+      "distance": 102.0
+    },
+    {
+      "source": "27",
+      "target": "58",
+      "distance": 284.0
+    },
+    {
+      "source": "27",
+      "target": "59",
+      "distance": 557.0
+    },
+    {
+      "source": "28",
+      "target": "29",
+      "distance": 247.0
+    },
+    {
+      "source": "28",
+      "target": "3",
+      "distance": 13.0
+    },
+    {
+      "source": "3",
+      "target": "34",
+      "distance": 76.0
+    },
+    {
+      "source": "30",
+      "target": "33",
+      "distance": 48.0
+    },
+    {
+      "source": "30",
+      "target": "8",
+      "distance": 206.0
+    },
+    {
+      "source": "31",
+      "target": "34",
+      "distance": 48.0
+    },
+    {
+      "source": "32",
+      "target": "35",
+      "distance": 48.0
+    },
+    {
+      "source": "33",
+      "target": "36",
+      "distance": 48.0
+    },
+    {
+      "source": "34",
+      "target": "37",
+      "distance": 48.0
+    },
+    {
+      "source": "35",
+      "target": "38",
+      "distance": 48.0
+    },
+    {
+      "source": "36",
+      "target": "39",
+      "distance": 48.0
+    },
+    {
+      "source": "37",
+      "target": "38",
+      "distance": 841.0
+    },
+    {
+      "source": "37",
+      "target": "40",
+      "distance": 48.0
+    },
+    {
+      "source": "38",
+      "target": "41",
+      "distance": 48.0
+    },
+    {
+      "source": "39",
+      "target": "42",
+      "distance": 48.0
+    },
+    {
+      "source": "39",
+      "target": "5",
+      "distance": 739.0
+    },
+    {
+      "source": "4",
+      "target": "40",
+      "distance": 50.0
+    },
+    {
+      "source": "40",
+      "target": "43",
+      "distance": 48.0
+    },
+    {
+      "source": "40",
+      "target": "5",
+      "distance": 102.0
+    },
+    {
+      "source": "41",
+      "target": "44",
+      "distance": 48.0
+    },
+    {
+      "source": "42",
+      "target": "45",
+      "distance": 48.0
+    },
+    {
+      "source": "43",
+      "target": "44",
+      "distance": 841.0
+    },
+    {
+      "source": "43",
+      "target": "46",
+      "distance": 48.0
+    },
+    {
+      "source": "44",
+      "target": "47",
+      "distance": 48.0
+    },
+    {
+      "source": "45",
+      "target": "48",
+      "distance": 48.0
+    },
+    {
+      "source": "46",
+      "target": "49",
+      "distance": 48.0
+    },
+    {
+      "source": "47",
+      "target": "50",
+      "distance": 48.0
+    },
+    {
+      "source": "48",
+      "target": "51",
+      "distance": 48.0
+    },
+    {
+      "source": "49",
+      "target": "52",
+      "distance": 48.0
+    },
+    {
+      "source": "50",
+      "target": "53",
+      "distance": 48.0
+    },
+    {
+      "source": "51",
+      "target": "52",
+      "distance": 841.0
+    },
+    {
+      "source": "51",
+      "target": "54",
+      "distance": 48.0
+    },
+    {
+      "source": "52",
+      "target": "53",
+      "distance": 841.0
+    },
+    {
+      "source": "52",
+      "target": "55",
+      "distance": 48.0
+    },
+    {
+      "source": "53",
+      "target": "56",
+      "distance": 48.0
+    },
+    {
+      "source": "54",
+      "target": "55",
+      "distance": 841.0
+    },
+    {
+      "source": "54",
+      "target": "57",
+      "distance": 48.0
+    },
+    {
+      "source": "55",
+      "target": "58",
+      "distance": 48.0
+    },
+    {
+      "source": "56",
+      "target": "59",
+      "distance": 48.0
+    },
+    {
+      "source": "57",
+      "target": "58",
+      "distance": 841.0
+    },
+    {
+      "source": "57",
+      "target": "60",
+      "distance": 48.0
+    },
+    {
+      "source": "58",
+      "target": "61",
+      "distance": 48.0
+    },
+    {
+      "source": "59",
+      "target": "62",
+      "distance": 48.0
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "distance": 39.0
+    },
+    {
+      "source": "60",
+      "target": "61",
+      "distance": 841.0
+    },
+    {
+      "source": "60",
+      "target": "63",
+      "distance": 48.0
+    },
+    {
+      "source": "61",
+      "target": "62",
+      "distance": 841.0
+    },
+    {
+      "source": "61",
+      "target": "64",
+      "distance": 48.0
+    },
+    {
+      "source": "62",
+      "target": "65",
+      "distance": 48.0
+    },
+    {
+      "source": "63",
+      "target": "64",
+      "distance": 841.0
+    },
+    {
+      "source": "64",
+      "target": "65",
+      "distance": 841.0
+    }
+  ],
+  "products": [
+    {
+      "id": "1",
+      "location": "1",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "2",
+      "location": "2",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "3",
+      "location": "3",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "4",
+      "location": "4",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "5",
+      "location": "5",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "6",
+      "location": "6",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "7",
+      "location": "7",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "8",
+      "location": "8",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "9",
+      "location": "9",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "10",
+      "location": "10",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "11",
+      "location": "11",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "12",
+      "location": "12",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "13",
+      "location": "13",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "14",
+      "location": "14",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "15",
+      "location": "15",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "16",
+      "location": "16",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "17",
+      "location": "17",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "18",
+      "location": "18",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "19",
+      "location": "19",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "20",
+      "location": "20",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "21",
+      "location": "21",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "22",
+      "location": "22",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "23",
+      "location": "23",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "24",
+      "location": "24",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "25",
+      "location": "25",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "26",
+      "location": "26",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "27",
+      "location": "27",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "28",
+      "location": "28",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    },
+    {
+      "id": "29",
+      "location": "29",
+      "size": 1.0,
+      "pick_minutes": 300.0
+    }
+  ],
+  "orders": [
+    {
+      "id": "1",
+      "items": {
+        "1": 1,
+        "2": 1,
+        "3": 1,
+        "4": 1
+      },
+      "due": 144000.0,
+      "rank": 0
+    },
+    {
+      "id": "2",
+      "items": {
+        "5": 1
+      },
+      "due": 126000.0,
+      "rank": 1
+    },
+    {
+      "id": "3",
+      "items": {
+        "6": 1,
+        "7": 1,
+        "8": 1,
+        "9": 1,
+        "10": 1,
+        "11": 1,
+        "12": 1,
+        "13": 1
+      },
+      "due": 72000.0,
+      "rank": 2
+    },
+    {
+      "id": "4",
+      "items": {
+        "14": 1
+      },
+      "due": 108000.0,
+      "rank": 3
+    },
+    {
+      "id": "5",
+      "items": {
+        "15": 1
+      },
+      "due": 126000.0,
+      "rank": 4
+    },
+    {
+      "id": "6",
+      "items": {
+        "16": 1
+      },
+      "due": 72000.0,
+      "rank": 5
+    },
+    {
+      "id": "7",
+      "items": {
+        "17": 1,
+        "18": 1,
+        "19": 1
+      },
+      "due": 126000.0,
+      "rank": 6
+    },
+    {
+      "id": "8",
+      "items": {
+        "20": 1,
+        "21": 1,
+        "22": 1
+      },
+      "due": 90000.0,
+      "rank": 7
+    },
+    {
+      "id": "9",
+      "items": {
+        "23": 1
+      },
+      "due": 72000.0,
+      "rank": 8
+    },
+    {
+      "id": "10",
+      "items": {
+        "24": 1,
+        "25": 1,
+        "26": 1
+      },
+      "due": 126000.0,
+      "rank": 9
+    },
+    {
+      "id": "11",
+      "items": {
+        "27": 1
+      },
+      "due": 54000.0,
+      "rank": 10
+    },
+    {
+      "id": "12",
+      "items": {
+        "28": 1,
+        "29": 1
+      },
+      "due": 126000.0,
+      "rank": 11
+    }
+  ],
+  "operations": {
+    "pickers": 2,
+    "capacity": 12.0,
+    "speed": 0.3333333333333333,
+    "location_minutes": 0.0,
+    "batch_minutes": 5400.0
+  },
+  "metadata": {
+    "source": "https://pagesperso.g-scop.grenoble-inp.fr/~cambazah/sequencing/index.html",
+    "format_source": "https://pagesperso.g-scop.grenoble-inp.fr/~cambazah/sequencing/data/format.txt",
+    "source_file": "instances_131_1.txt",
+    "source_sha256": "2538bf0d78ea9db443f164c241b1b17a42dad7d94facfba6ef1c78280f817b90",
+    "source_kind": "author_benchmark",
+    "generated_by_this_project": false,
+    "units": {
+      "distance": "source_distance_unit",
+      "time": "source_time_unit",
+      "capacity": "source_size_unit"
+    },
+    "due_dates": {
+      "regenerated": false,
+      "rule": "unchanged source DueDate column"
+    },
+    "source_parameters": {
+      "NbLocations": 66.0,
+      "SetupTime": 5400.0,
+      "NbVerticesIntersections": 36.0,
+      "ArrivalDepot": 66.0,
+      "NbProducts": 29.0,
+      "PickTime": 300.0,
+      "NbPickers": 2.0,
+      "alpha": 1.0,
+      "TimeToTravelOneDistanceUnit": 3.0,
+      "NbOrders": 12.0,
+      "CapaPicker": 12.0,
+      "DepartingDepot": 0.0
+    },
+    "source_tardiness_penalties": {
+      "1": 0.0,
+      "2": 0.0,
+      "3": 0.0,
+      "4": 0.0,
+      "5": 0.0,
+      "6": 0.0,
+      "7": 0.0,
+      "8": 0.0,
+      "9": 0.0,
+      "10": 0.0,
+      "11": 0.0,
+      "12": 0.0
+    },
+    "conversion": {
+      "depot_copies": [
+        "0",
+        "66"
+      ],
+      "depot_contraction_verified": true,
+      "units_rescaled": false,
+      "pick_time_interpretation": "per item quantity",
+      "location_service_added": 0,
+      "target_objective": "project normalized distance/makespan/soft tardiness; source alpha and penalties retained as metadata, not used as objective weights",
+      "source_problem": "JOBPRSP-D / hard deadlines; source best-known objectives are not directly comparable"
+    }
+  },
+  "directed": false,
+  "schema_version": 1
+}
