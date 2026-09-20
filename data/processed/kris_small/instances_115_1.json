@@ -822,18 +822,18 @@
       "rule": "unchanged source DueDate column"
     },
     "source_parameters": {
-      "NbLocations": 53.0,
-      "SetupTime": 5400.0,
-      "NbVerticesIntersections": 36.0,
-      "ArrivalDepot": 53.0,
-      "NbProducts": 16.0,
-      "PickTime": 300.0,
-      "NbPickers": 2.0,
-      "alpha": 1.0,
       "TimeToTravelOneDistanceUnit": 3.0,
-      "NbOrders": 6.0,
+      "NbPickers": 2.0,
+      "NbProducts": 16.0,
+      "NbLocations": 53.0,
       "CapaPicker": 4.0,
-      "DepartingDepot": 0.0
+      "PickTime": 300.0,
+      "ArrivalDepot": 53.0,
+      "NbOrders": 6.0,
+      "DepartingDepot": 0.0,
+      "NbVerticesIntersections": 36.0,
+      "alpha": 1.0,
+      "SetupTime": 5400.0
     },
     "source_tardiness_penalties": {
       "1": 0.0,

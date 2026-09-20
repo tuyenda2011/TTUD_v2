@@ -1,0 +1,50 @@
+\contentsline {section}{\numberline {1}GIỚI THIỆU ĐỀ TÀI}{6}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Bối cảnh và lý do lựa chọn}{6}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Mục tiêu nghiên cứu}{7}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}Đối tượng và phạm vi nghiên cứu}{7}{subsection.1.3}%
+\contentsline {subsection}{\numberline {1.4}Đóng góp của đề tài}{8}{subsection.1.4}%
+\contentsline {section}{\numberline {2}CƠ SỞ LÝ THUYẾT}{9}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Tổng quan về học tăng cường}{9}{subsection.2.1}%
+\contentsline {subsubsection}{\numberline {2.1.1}Quá trình quyết định Markov}{9}{subsubsection.2.1.1}%
+\contentsline {subsubsection}{\numberline {2.1.2}Phần thưởng tích lũy và hàm giá trị}{10}{subsubsection.2.1.2}%
+\contentsline {subsubsection}{\numberline {2.1.3}Khám phá và khai thác}{11}{subsubsection.2.1.3}%
+\contentsline {subsection}{\numberline {2.2}Q-Learning}{12}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Deep Q-Network}{13}{subsection.2.3}%
+\contentsline {subsubsection}{\numberline {2.3.1}Mạng Q}{14}{subsubsection.2.3.1}%
+\contentsline {subsubsection}{\numberline {2.3.2}Experience replay}{14}{subsubsection.2.3.2}%
+\contentsline {subsubsection}{\numberline {2.3.3}Target network và loss}{15}{subsubsection.2.3.3}%
+\contentsline {subsection}{\numberline {2.4}Double DQN}{16}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}So sánh Q-Learning, DQN và Double DQN}{18}{subsection.2.5}%
+\contentsline {section}{\numberline {3}XÂY DỰNG HỆ THỐNG VÀ THIẾT KẾ THỰC NGHIỆM}{19}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Tổng quan ứng dụng học tăng cường trong trò chơi Pacman}{19}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Môi trường Mini Pacman}{20}{subsection.3.2}%
+\contentsline {subsubsection}{\numberline {3.2.1}Bản đồ và các thành phần trong môi trường}{20}{subsubsection.3.2.1}%
+\contentsline {subsubsection}{\numberline {3.2.2}Luật hoạt động và điều kiện kết thúc}{21}{subsubsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.3}Mô hình hóa bài toán học tăng cường}{23}{subsection.3.3}%
+\contentsline {subsubsection}{\numberline {3.3.1}Không gian và biểu diễn trạng thái}{23}{subsubsection.3.3.1}%
+\contentsline {subsubsection}{\numberline {3.3.2}Không gian hành động}{25}{subsubsection.3.3.2}%
+\contentsline {subsubsection}{\numberline {3.3.3}Thiết kế phần thưởng}{25}{subsubsection.3.3.3}%
+\contentsline {subsection}{\numberline {3.4}Cài đặt các thuật toán}{26}{subsection.3.4}%
+\contentsline {subsubsection}{\numberline {3.4.1}Q-Learning}{26}{subsubsection.3.4.1}%
+\contentsline {subsubsection}{\numberline {3.4.2}DQN}{27}{subsubsection.3.4.2}%
+\contentsline {subsubsection}{\numberline {3.4.3}Double DQN}{28}{subsubsection.3.4.3}%
+\contentsline {subsection}{\numberline {3.5}Thiết kế thực nghiệm}{28}{subsection.3.5}%
+\contentsline {subsubsection}{\numberline {3.5.1}Cấu hình và siêu tham số}{29}{subsubsection.3.5.1}%
+\contentsline {subsubsection}{\numberline {3.5.2}Quy trình huấn luyện và đánh giá}{30}{subsubsection.3.5.2}%
+\contentsline {subsubsection}{\numberline {3.5.3}Tiêu chí đánh giá}{31}{subsubsection.3.5.3}%
+\contentsline {section}{\numberline {4}KẾT QUẢ THỰC NGHIỆM VÀ THẢO LUẬN}{34}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Kết quả đánh giá cuối}{34}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Phân tích quá trình huấn luyện}{35}{subsection.4.2}%
+\contentsline {subsubsection}{\numberline {4.2.1}Reward}{36}{subsubsection.4.2.1}%
+\contentsline {subsubsection}{\numberline {4.2.2}Completion rate}{38}{subsubsection.4.2.2}%
+\contentsline {subsubsection}{\numberline {4.2.3}Win rate}{40}{subsubsection.4.2.3}%
+\contentsline {subsubsection}{\numberline {4.2.4}Steps}{42}{subsubsection.4.2.4}%
+\contentsline {subsubsection}{\numberline {4.2.5}Loss}{44}{subsubsection.4.2.5}%
+\contentsline {subsection}{\numberline {4.3}Ảnh hưởng của learning rate}{45}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}Tổng hợp kết quả thực nghiệm}{46}{subsection.4.4}%
+\contentsline {subsection}{\numberline {4.5}Hạn chế của thực nghiệm}{47}{subsection.4.5}%
+\contentsline {subsection}{\numberline {4.6}Hướng dẫn chạy demo}{48}{subsection.4.6}%
+\contentsline {section}{\numberline {5}KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN}{50}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Kết luận}{50}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Hướng phát triển}{51}{subsection.5.2}%
+\contentsline {section}{TÀI LIỆU THAM KHẢO}{53}{Item.16}%

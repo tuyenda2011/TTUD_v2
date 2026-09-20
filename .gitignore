@@ -79,6 +79,8 @@ coverage.xml
 # ==========================================
 result/
 results/
+# Research study folders are generated evidence and are already covered by results/.
+results/study*/
 /output/
 scratch/
 tmp/

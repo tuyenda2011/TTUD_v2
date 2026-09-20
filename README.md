@@ -14,7 +14,7 @@
 - **🎯 Tối ưu hóa đa mục tiêu (Joint Optimization):** Giải quyết bài toán tích hợp gom đơn, định tuyến trên đồ thị kho (NN, 2-Opt, Exact, S-Shape) và lập lịch cho nhiều nhân viên.
 - **🎮 Mô phỏng phát lại nghiệm:** HTML5 Canvas hiển thị picker, tuyến `walk`, điểm lấy hàng và tải trọng theo timeline của nghiệm đã kiểm chứng. Tốc độ khung hình chưa được benchmark như một cam kết 60fps.
 - **🗺️ 5 kịch bản kho tổng hợp:** Hỗ trợ `single_block`, `double_block`, `mega_hub`, `rush_hour` và `abc_zonal`; đây là dữ liệu sinh nhân tạo để kiểm thử, không phải xác nhận vận hành tại kho thực tế.
-- **📊 Adapter benchmark tác giả:** Có thể đọc bộ Kris khi dữ liệu được chuẩn bị; catalog local gồm 243 instance Kris Small. Kết quả không tự động là benchmark toàn bộ catalog và đơn vị nguồn được giữ nguyên nếu chưa có hệ số xác nhận.
+- **📊 Adapter benchmark tác giả:** Catalog local gồm 18 instance Kris Small, 6 file mỗi nhóm 6/12/18 đơn. Đây là tập con phục vụ đồ án, không phải toàn bộ benchmark tác giả.
 - **⚡ Thuật toán Metaheuristic mạnh mẽ:** So sánh đối chuẩn giữa các phương pháp: Cơ sở (`B0`, `B1`, `B2`, `B3`), `LNS`, `ALNS` (Adaptive Large Neighborhood Search), và `VNS` (Variable Neighborhood Search).
 
 ---
@@ -23,9 +23,9 @@
 
 ### Cách 1: Sử dụng môi trường Conda có sẵn (`TTUD`)
 
-Mở **Anaconda Prompt** và chạy:
+Mở **Anaconda Prompt** hoặc **VS Code Terminal (CMD)** và chạy:
 
-```powershell
+```cmd
 conda activate TTUD
 cd /d d:\TTUD_v2
 pip install -r requirements.txt
@@ -37,25 +37,20 @@ streamlit run demo/app.py
 ### Cách 2: Cài đặt từ đầu bằng Python tiêu chuẩn
 
 #### Bước 1: Mở Terminal tại thư mục dự án
-```bash
+```cmd
 cd /d d:\TTUD_v2
 ```
 
 #### Bước 2: Tạo môi trường ảo và cài đặt thư viện
-```bash
-# Windows
+```cmd
+:: Windows CMD
 python -m venv .venv
 .venv\Scripts\activate
-pip install -r requirements.txt
-
-# macOS / Linux
-python3 -m venv .venv
-source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
 #### Bước 3: Khởi chạy ứng dụng Web
-```bash
+```cmd
 streamlit run demo/app.py
 ```
 Ứng dụng sẽ tự động mở tại địa chỉ: **http://localhost:8501**
@@ -64,12 +59,18 @@ streamlit run demo/app.py
 
 ## 🎮 Hướng dẫn sử dụng Giao diện Demo
 
+Demo hiển thị Kris bằng mét và phút/giây theo **quy ước dự án chưa được nguồn xác nhận**:
+10 đơn vị khoảng cách gốc = 1 m; 30 đơn vị thời gian gốc = 1 giây.
+Quy đổi áp dụng cho bản hiển thị của số đo, deadline, độ trễ, lịch và mô phỏng;
+không thay đổi F hoặc số đơn trễ. JSON tải xuống và benchmark vẫn giữ dữ liệu gốc.
+Không coi số đo đã quy đổi là số đo vật lý được tác giả chứng nhận.
+
 Giao diện Web Streamlit được chia thành 4 khu vực làm việc chính:
 
 1. **Thanh bên điều khiển (Sidebar):**
    - **Nguồn dữ liệu:** Chọn **Dữ liệu tổng hợp** (5 kịch bản), **Kris — benchmark tác giả** (catalog local tùy chọn), hoặc **JSON tải lên**.
    - **Cấu hình:** Số lượng đơn hàng, số nhân viên lấy hàng (3–6+ nhân viên), sức chứa của xe đẩy (capacity).
-   - **Mục nâng cao:** Tinh chỉnh độ nới hạn (`tightness`), seed ngẫu nhiên, ngân sách tìm kiếm (giây) và bật so sánh thuật toán (`VNS`, `LNS`, `B0-B3`).
+   - **Mục nâng cao:** Tinh chỉnh độ nới hạn (`tightness`), seed ngẫu nhiên, ngân sách tìm kiếm (giây) và bật so sánh 5 thuật toán `B0/B2/LNS/ALNS/VNS`.
 2. **Tab 1 — 🎮 Mô phỏng động:**
    - Xem picker phát lại `walk` dọc lối đi, bốc dỡ hàng hóa và cập nhật dung lượng giỏ hàng theo nghiệm.
    - Bộ điều khiển tiện ích: Play / Pause / Tua lại ca làm việc (`↺ Xem lại`).
@@ -99,16 +100,16 @@ Giao diện Web Streamlit được chia thành 4 khu vực làm việc chính:
 
 ## 💻 Chạy bằng Dòng lệnh CLI (Command Line)
 
-Bạn có thể chạy độc lập các module sinh dữ liệu, giải thuật toán và kiểm tra tính hợp lệ mà không cần mở giao diện Web:
+Bạn có thể chạy độc lập các module sinh dữ liệu, giải thuật toán và kiểm tra tính hợp lệ mà không cần mở giao diện Web trên terminal CMD:
 
-```bash
-# 1. Tự sinh dữ liệu kho theo kịch bản
+```cmd
+:: 1. Tự sinh dữ liệu kho theo kịch bản
 python -m src generate --orders 20 --pickers 4 --capacity 30 --scenario double_block --output data/synthetic/my_run.json
 
-# 2. Chạy thuật toán giải (ALNS, VNS, LNS, B0)
+:: 2. Chạy thuật toán giải (ALNS, VNS, LNS, B0)
 python -m src solve data/synthetic/my_run.json --method ALNS --seconds 5 --output results/my_solution.json
 
-# 3. Kiểm định độc lập nghiệm (Tải trọng, Tuyến đi, Thời hạn giao)
+:: 3. Kiểm định độc lập nghiệm (Tải trọng, Tuyến đi, Thời hạn giao)
 python -m src validate data/synthetic/my_run.json results/my_solution.json
 ```
 
@@ -136,8 +137,8 @@ Dự án sở hữu bộ kiểm thử tự động với **137 test được thu
 - Ràng buộc tải trọng xe, tính đơn trễ và thời gian hoàn tất.
 - Timeline mô phỏng phát lại `walk`, xử lý depot service và hiển thị đơn vị đã khai báo.
 
-Chạy toàn bộ test suite:
-```bash
+Chạy toàn bộ test suite trên CMD:
+```cmd
 pytest -q
 ```
 
@@ -177,8 +178,8 @@ Kết quả và giới hạn của đợt hoàn tất cải tiến được ghi 
 Để chạy lại nghiên cứu có tuning/holdout tách biệt, 10 search seed, ablation,
 độ nhạy trọng số và exact nhỏ:
 
-```powershell
-python scripts/run_research.py all --protocol configs/research_completion.json --output results/study_moi
+```cmd
+python scripts/run_research.py all --protocol configs/research_completion.json --output results/study_run_01
 ```
 
 Đọc [protocol](docs/RESEARCH_PROTOCOL.md) trước khi diễn giải số liệu.
@@ -186,6 +187,68 @@ python scripts/run_research.py all --protocol configs/research_completion.json -
 chưa đạt tiêu chí giữ trên tập phát triển nên không bật mặc định.
 ALNS là khung thuật toán có sẵn; không tuyên bố luôn thắng LNS/VNS hay đạt tối ưu toàn cục.
 
+### Chạy benchmark và xuất dữ liệu cho báo cáo
+
+Chạy các lệnh sau trực tiếp trên **terminal CMD của VS Code**. Mỗi lần chạy phải dùng một thư mục kết quả mới vì pipeline không ghi đè dữ liệu cũ:
+
+```cmd
+:: 1. Chạy nghiên cứu đầy đủ (tuning, holdout, ablation, sensitivity, exact):
+python scripts/run_research.py all --protocol configs/research_completion.json --output results/study_run_01
+
+:: 2. Kiểm tra holdout và xuất bảng/biểu đồ dùng trong báo cáo:
+python scripts/build_comparison_report.py --benchmark results/study_run_01/holdout --output results/study_run_01/holdout_report
+```
+
+Các tệp dùng để viết báo cáo nằm trong `results/study_run_01/holdout_report/`:
+
+- `REPORT.md`: mô tả bộ dữ liệu, số run và các tệp đã kiểm tra.
+- `comparison.csv`: bảng thắng/hòa/thua và mức cải thiện trung bình.
+- `comparison_pairs.csv`: kết quả từng instance cho từng cặp thuật toán.
+- `per_instance.csv`: trung bình, độ lệch chuẩn và chẩn đoán theo instance/thuật toán.
+- `raw_metrics.csv`: từng lần chạy sau khi qua validator.
+- `charts/objective_by_instance.*`, `charts/win_tie_loss.*`, `charts/schedule_by_picker.svg`: hình đưa vào báo cáo.
+
+Báo cáo tổng hợp toàn bộ thí nghiệm nằm ở `results/study_run_01/REPORT.md`; nghiệm thô và manifest được giữ trong `results/study_run_01/holdout/` để truy vết.
+
+Nếu chỉ cần kiểm tra pipeline hoặc lấy nhanh bảng và biểu đồ mẫu, dùng cấu hình smoke (chạy trên terminal CMD):
+
+```cmd
+python -m src benchmark --config configs/smoke.json --output results/benchmark_smoke_run
+python scripts/build_comparison_report.py --benchmark results/benchmark_smoke_run --output results/benchmark_smoke_report
+```
+
+Kết quả smoke chỉ dùng để kiểm tra và minh họa. Số liệu chính thức phải lấy từ pipeline phù hợp: `run_research.py all` cho protocol nghiên cứu, `map_scenarios_benchmark.json` cho năm map của Demo, hoặc `benchmark_kris.py` cho bộ dữ liệu tác giả.
+
+### Benchmark đúng 5 kịch bản map trong Demo
+
+Nguồn **Dữ liệu tổng hợp — chỉ kiểm thử** của Demo dùng năm map trong `MAP_SCENARIOS`. Để benchmark đúng cùng các map đó, dùng cấu hình riêng trong terminal CMD:
+
+```cmd
+:: 1. Chạy nhanh (khuyên dùng khi kiểm thử): 1 seed, 1.0 giây/lần chạy (tự động xuất biểu đồ)
+python scripts/benchmark_maps.py --seconds 1.0 --search-seeds 1 --output results/map_quick_run
+
+:: 2. Chạy đầy đủ 10 seeds (chuẩn báo cáo đầy đủ 160 run - tự động xuất biểu đồ)
+python scripts/benchmark_maps.py --output results/map_run_01
+```
+
+Cấu hình này chạy `single_block`, `double_block`, `mega_hub`, `rush_hour` và `abc_zonal` với seed map 42, cùng 5 phương pháp `B0/B2/LNS/ALNS/VNS`. B0/B2 chạy một lần; LNS/ALNS/VNS chạy 10 search seed, tổng cộng 160 run. Đây là bộ số liệu dùng khi báo cáo kết quả theo năm kịch bản Demo; pipeline `run_research.py all` vẫn là bộ synthetic nghiên cứu độc lập.
+
+### Benchmark bộ dữ liệu tác giả Kris
+
+Để chạy benchmark trên bộ 18 instance Kris Small (6 file mỗi nhóm 6/12/18 đơn) và so sánh 5 thuật toán `B0/B2/LNS/ALNS/VNS` trên terminal CMD (tự động xuất đầy đủ bảng số liệu và biểu đồ vào `<output>_report` chỉ với 1 dòng lệnh):
+
+```cmd
+:: 1. Chạy nhanh (khuyên dùng khi kiểm thử): 1 file mỗi nhóm số lượng đơn, 1.0 giây/lần chạy (tự động xuất biểu đồ)
+python scripts/benchmark_kris.py --limit-per-size 1 --seconds 1.0 --output results/kris_quick_run
+
+:: 2. Chạy bộ 18 instance của đồ án (tự động xuất biểu đồ)
+python scripts/benchmark_kris.py --output results/kris_18_run
+```
+
+> **Lưu ý:** Thư mục `--output` phải là thư mục mới (chưa tồn tại), runner từ chối ghi đè để bảo vệ tính toàn vẹn của kết quả benchmark.
+
 ## 📜 Giấy phép & Thông tin liên hệ
 
 Dự án phục vụ mục đích học tập, nghiên cứu và báo cáo đồ án môn học **Thuật toán ứng dụng (TTUD)**. Mọi đóng góp và thắc mắc vui lòng liên hệ tác giả qua repository này.
+
+Bộ Kris của đồ án là tập con 18 instance, không phải toàn bộ benchmark tác giả. Danh sách cố định và quy tắc chọn nằm trong `data/processed/kris_selection.json`; ưu tiên các file kiểm thử/demo đang dùng, sau đó lấy theo tên file cho đủ 6 file mỗi nhóm. Mặc định 3 search seed: 198 lượt chạy cho 5 thuật toán. Kết quả cũ trên 243 instance là đợt riêng, không dùng nhãn 18 instance cho số liệu đó.

@@ -1,7 +1,7 @@
 """Convert verified compatible author instances, retaining source fields and provenance."""
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -12,8 +12,14 @@ from src.models import InputError, write_json
 def main():
     raw = ROOT / "data" / "raw" / "KrisSmallDataCorrected"
     target = ROOT / "data" / "processed" / "kris_small"
+    selection = json.loads((ROOT / "data/processed/kris_selection.json").read_text(encoding="utf-8"))
+    selected = {Path(name).stem for name in selection["files"]}
+    paths = [path for path in sorted(raw.rglob("*.txt")) if path.stem in selected]
+    missing = selected - {path.stem for path in paths}
+    if missing:
+        raise SystemExit(f"Missing selected raw Kris files: {sorted(missing)}")
     records, rejected = [], []
-    for path in sorted(raw.rglob("*.txt")):
+    for path in paths:
         try:
             instance = read_kris(path)
             dest = target / f"{path.stem}.json"

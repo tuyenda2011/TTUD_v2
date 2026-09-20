@@ -8,7 +8,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from .comparison import paired_comparisons
-from .generator import generate
+from .generator import MAP_SCENARIOS, generate, generate_scenario
 from .models import InputError, read_instance, write_json
 from .search import SearchConfig
 from .solver import METHODS, fingerprint, solve
@@ -18,7 +18,7 @@ STOCHASTIC = {"B3", "LNS", "ALNS", "VNS", "ALNS_NO_SCHEDULE", "ALNS_NO_2OPT"}
 
 def benchmark(config, output, progress=None):
     output = Path(output)
-    methods = config.get("methods", ["B0", "B1", "B2", "B3", "LNS", "ALNS"])
+    methods = config.get("methods", ["B0", "B2", "LNS", "ALNS", "VNS"])
     if not methods or "B0" not in methods or len(methods) != len(set(methods)) or any(m not in METHODS for m in methods):
         raise InputError("Benchmark methods must be unique, supported and include B0")
     sizes = config.get("sizes", [20, 50])
@@ -30,8 +30,30 @@ def benchmark(config, output, progress=None):
     started = time.perf_counter()
     rows, runs = [], []
     source_hashes = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(Path(__file__).parent.glob("*.py"))}
-    datasets = [(read_instance(path), None) for path in config.get("instances", [])]
-    if not datasets:
+    instance_paths = config.get("instances", [])
+    scenario_keys = config.get("scenarios", [])
+    if instance_paths and scenario_keys:
+        raise InputError("Benchmark cannot combine instances and scenarios")
+    if instance_paths:
+        datasets = [(read_instance(path), None) for path in instance_paths]
+    elif scenario_keys:
+        if not isinstance(scenario_keys, list) or not scenario_keys:
+            raise InputError("scenarios must be a nonempty list")
+        unknown = sorted(set(scenario_keys) - set(MAP_SCENARIOS))
+        if unknown:
+            raise InputError(f"Unknown benchmark scenarios: {unknown}")
+        scenario_seeds = config.get("scenario_seeds", [42])
+        if not scenario_seeds or len(scenario_seeds) != len(set(scenario_seeds)):
+            raise InputError("scenario_seeds must be nonempty and unique")
+        overrides = config.get("scenario_overrides", {})
+        if not isinstance(overrides, dict):
+            raise InputError("scenario_overrides must be an object")
+        datasets = [
+            (generate_scenario(scenario, seed=seed, **overrides.get(scenario, {})), seed)
+            for scenario in scenario_keys
+            for seed in scenario_seeds
+        ]
+    else:
         datasets = [(generate(n=n, seed=s, **config.get("generator", {})), s) for n in sizes for s in instance_seeds]
     names = [instance.name.casefold() for instance, _ in datasets]
     if len(names) != len(set(names)):

@@ -1,0 +1,24 @@
+{
+    "purpose":  "Coursework subset: 6 instances per order-count stratum; not the full author benchmark",
+    "rule":  "Preserve instances_6_1, instances_100_1 and instances_103_1 used by tests/demo, then fill each stratum by lexicographic filename; no result-based selection",
+    "files":  [
+                  "instances_106_1.json",
+                  "instances_107_1.json",
+                  "instances_108_1.json",
+                  "instances_115_1.json",
+                  "instances_116_1.json",
+                  "instances_117_1.json",
+                  "instances_103_1.json",
+                  "instances_104_1.json",
+                  "instances_105_1.json",
+                  "instances_112_1.json",
+                  "instances_113_1.json",
+                  "instances_6_1.json",
+                  "instances_1_1.json",
+                  "instances_10_1.json",
+                  "instances_100_1.json",
+                  "instances_101_1.json",
+                  "instances_102_1.json",
+                  "instances_109_1.json"
+              ]
+}

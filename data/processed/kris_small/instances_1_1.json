@@ -911,18 +911,18 @@
       "rule": "unchanged source DueDate column"
     },
     "source_parameters": {
-      "NbLocations": 49.0,
-      "SetupTime": 5400.0,
-      "NbVerticesIntersections": 18.0,
-      "ArrivalDepot": 49.0,
-      "NbProducts": 31.0,
-      "PickTime": 300.0,
-      "NbPickers": 2.0,
-      "alpha": 1.0,
       "TimeToTravelOneDistanceUnit": 3.0,
-      "NbOrders": 18.0,
+      "NbPickers": 2.0,
+      "NbProducts": 31.0,
+      "NbLocations": 49.0,
       "CapaPicker": 4.0,
-      "DepartingDepot": 0.0
+      "PickTime": 300.0,
+      "ArrivalDepot": 49.0,
+      "NbOrders": 18.0,
+      "DepartingDepot": 0.0,
+      "NbVerticesIntersections": 18.0,
+      "alpha": 1.0,
+      "SetupTime": 5400.0
     },
     "source_tardiness_penalties": {
       "1": 0.0,

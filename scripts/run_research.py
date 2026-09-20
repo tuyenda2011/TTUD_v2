@@ -477,7 +477,7 @@ def report(output, locked):
     by_key = {(r["instance"], r["method"]): r for r in summaries}
     tradeoffs = []
     for row in alns:
-        for reference in ("B0", "B2", "B3", "LNS", "VNS"):
+        for reference in (m for m in protocol["methods"] if m != "ALNS"):
             other = by_key[row["instance"], reference]
             if row["objective"]["mean"] < other["objective"]["mean"] and row["late_orders"]["mean"] > other["late_orders"]["mean"]:
                 tradeoffs.append(f"- {row['instance']}: ALNS F={row['objective']['mean']:.5f} < {reference} "

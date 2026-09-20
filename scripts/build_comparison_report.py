@@ -16,10 +16,11 @@ import math
 import platform
 import shutil
 import statistics
+import sys
+import textwrap
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
-import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -29,7 +30,6 @@ from src.comparison import paired_comparisons
 from src.models import InputError, read_instance
 from src.solver import fingerprint
 from src.validator import validate_solution
-
 
 METRICS = ("objective", "distance", "makespan", "tardiness", "late_orders", "on_time_rate", "total_seconds")
 STOCHASTIC = {"B3", "LNS", "ALNS", "VNS", "ALNS_NO_SCHEDULE", "ALNS_NO_2OPT"}
@@ -263,48 +263,78 @@ def _comparison_pairs(comparisons):
     return rows, fields
 
 
-def _make_charts(summaries, comparisons, output: Path, results=None):
+def _make_charts(summaries, comparisons, output: Path, results=None, instance_labels=None):
     try:
         import matplotlib.pyplot as plt
-    except ImportError:
-        return _make_svg_charts(summaries, comparisons, output, results)
+    except ImportError as exc:
+        raise InputError("Biểu đồ báo cáo cần matplotlib: pip install matplotlib; hoặc dùng --no-charts để chỉ xuất bảng.") from exc
     charts = output / "charts"
     charts.mkdir(parents=True, exist_ok=True)
     instances = sorted({row["instance"] for row in summaries})
     methods = sorted({row["method"] for row in summaries})
     by = {(row["instance"], row["method"]): row for row in summaries}
-    fig, axis = plt.subplots(figsize=(max(8, len(instances) * 1.5), 5))
-    for method in methods:
-        values = [by[(instance, method)]["objective"]["mean"] if (instance, method) in by else math.nan for instance in instances]
-        axis.plot(instances, values, marker="o", label=method)
-    axis.set_title("Mean F theo từng instance (thấp hơn là tốt hơn)")
-    axis.set_ylabel("F")
-    axis.tick_params(axis="x", rotation=35)
-    axis.legend(ncol=min(4, len(methods)), fontsize="small")
-    fig.tight_layout()
-    path = charts / "objective_by_instance.png"
-    fig.savefig(path, dpi=160)
-    plt.close(fig)
+    paths = []
+    colors = {"B0": "#d97706", "B2": "#15803d", "LNS": "#dc2626", "ALNS": "#2563eb", "VNS": "#7c3aed"}
+
+    def save(fig, stem):
+        fig.tight_layout()
+        for extension in ("png", "pdf"):
+            path = charts / f"{stem}.{extension}"
+            fig.savefig(path, dpi=300, facecolor="white")
+            paths.append(path.relative_to(output).as_posix())
+        plt.close(fig)
+
+    # Keep a fixed printed size; paginate instead of shrinking hundreds of labels.
+    labels = instance_labels or {}
+    low = min(row["objective"]["mean"] for row in summaries)
+    high = max(row["objective"]["mean"] for row in summaries)
+    margin = max((high - low) * .12, .01)
+    for start in range(0, len(instances), 5):
+        page = instances[start:start + 5]
+        fig, axis = plt.subplots(figsize=(7.2, 4.8))
+        for method in methods:
+            values = [by[(name, method)]["objective"]["mean"] if (name, method) in by else math.nan for name in page]
+            axis.plot(range(len(page)), values, marker="o", markersize=5,
+                      color=colors.get(method), label=method, linewidth=1.5)
+        axis.set_xticks(range(len(page)), [labels.get(name, textwrap.fill(name, 19)) for name in page], fontsize=9)
+        axis.set_ylim(low - margin, high + margin)
+        axis.set_title("Giá trị F trung bình theo bài toán", fontsize=13, pad=38)
+        axis.set_ylabel("F (càng thấp càng tốt)", fontsize=10)
+        axis.grid(axis="y", alpha=.25)
+        axis.legend(ncol=min(5, len(methods)), loc="lower center", bbox_to_anchor=(.5, 1.01), frameon=False)
+        suffix = "" if start == 0 else f"_{start // 5 + 1:02d}"
+        save(fig, "objective_by_instance" + suffix)
 
     pairs = [row for row in comparisons if row["win"] + row["tie"] + row["loss"]]
-    if pairs:
-        labels = [f"{row['method']} vs {row['reference']}" for row in pairs]
-        x = list(range(len(labels)))
-        fig, axis = plt.subplots(figsize=(max(8, len(labels) * 1.2), 5))
-        axis.bar([i - 0.25 for i in x], [row["win"] for row in pairs], width=0.25, label="Thắng")
-        axis.bar(x, [row["tie"] for row in pairs], width=0.25, label="Hòa")
-        axis.bar([i + 0.25 for i in x], [row["loss"] for row in pairs], width=0.25, label="Thua")
-        axis.set_xticks(x, labels, rotation=45, ha="right")
-        axis.set_ylabel("Số instance")
-        axis.set_title("Thắng / hòa / thua theo instance")
-        axis.legend()
-        fig.tight_layout()
-        path2 = charts / "win_tie_loss.png"
-        fig.savefig(path2, dpi=160)
-        plt.close(fig)
-        paths = [path.relative_to(output).as_posix(), path2.relative_to(output).as_posix()]
-    else:
-        paths = [path.relative_to(output).as_posix()]
+    main = [row for row in pairs if row["method"] == "ALNS"]
+    others = [row for row in pairs if row["method"] != "ALNS"]
+    groups = [("win_tie_loss", main)] if main else []
+    groups += [(f"win_tie_loss_other_{i // 6 + 1:02d}", others[i:i + 6]) for i in range(0, len(others), 6)]
+    for stem, rows in groups:
+        fig, axis = plt.subplots(figsize=(7.2, 4.5))
+        positions = list(range(len(rows)))
+        left = [0] * len(rows)
+        maximum = max(row["win"] + row["tie"] + row["loss"] for row in rows)
+        for key, label, color in (("win", "Thắng", "#15803d"), ("tie", "Hòa", "#eab308"), ("loss", "Thua", "#dc2626")):
+            values = [row[key] for row in rows]
+            axis.barh(positions, values, left=left, height=.55, color=color, label=label)
+            for i, value in enumerate(values):
+                if value >= maximum * .055:
+                    axis.text(left[i] + value / 2, i, str(value), ha="center", va="center", fontsize=10,
+                              color="black" if key == "tie" else "white")
+            left = [a + b for a, b in zip(left, values)]
+        for i, row in enumerate(rows):
+            axis.text(maximum * 1.025, i, f"{row['win']} / {row['tie']} / {row['loss']}", va="center", fontsize=9)
+        axis.set_yticks(positions, [f"{r['method']} so với {r['reference']}" for r in rows], fontsize=10)
+        axis.invert_yaxis()
+        axis.set_xlim(0, maximum * 1.32)
+        from matplotlib.ticker import MaxNLocator
+        axis.xaxis.set_major_locator(MaxNLocator(integer=True))
+        axis.set_xlabel("Số bài toán · Số bên phải: thắng / hòa / thua", fontsize=9)
+        axis.set_title("Kết quả so sánh theo từng bài toán", fontsize=13, pad=38)
+        axis.legend(ncol=3, loc="lower center", bbox_to_anchor=(.5, 1.01), frameon=False)
+        axis.spines[["top", "right"]].set_visible(False)
+        save(fig, stem)
     schedule = _make_schedule_svg(results, output)
     if schedule:
         paths.append(schedule)
@@ -442,7 +472,18 @@ def build_report(benchmark: Path, output: Path, charts=True):
     if source_selection.is_file():
         shutil.copyfile(source_selection, output / "source_selection.json")
 
-    chart_paths = _make_charts(verified["summaries"], verified["comparisons"], output, verified["results"]) if charts else []
+    instance_labels = {}
+    for path in sorted((verified["root"] / "instances").glob("*.json")):
+        instance = read_instance(path)
+        scenario = instance.metadata.get("scenario", {})
+        if scenario.get("name"):
+            title = scenario["name"].split(" (")[0]
+            seed = instance.name.rsplit("seed", 1)[-1]
+            instance_labels[instance.name] = textwrap.fill(title, 18) + f"\n{len(instance.orders)} đơn · seed {seed}"
+    chart_paths = _make_charts(verified["summaries"], verified["comparisons"], output, verified["results"], instance_labels) if charts else []
+    if charts:
+        from scripts.report_extra_charts import extra_charts
+        chart_paths.extend(extra_charts(verified, output, instance_labels))
     methods = sorted({result["method"] for result in verified["results"]})
     instances = sorted({result["instance"] for result in verified["results"]})
     source_digest = hashlib.sha256((verified["root"] / "manifest.json").read_bytes()).hexdigest()
@@ -484,7 +525,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--benchmark", type=Path, required=True, help="One completed benchmark directory")
     parser.add_argument("--output", type=Path, required=True, help="New directory for report-ready artifacts")
-    parser.add_argument("--no-charts", action="store_true", help="Skip PNG chart generation")
+    parser.add_argument("--no-charts", action="store_true", help="Skip PNG/PDF chart generation")
     args = parser.parse_args(argv)
     try:
         verification = build_report(args.benchmark, args.output, charts=not args.no_charts)

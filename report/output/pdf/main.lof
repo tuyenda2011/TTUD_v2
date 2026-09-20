@@ -1,0 +1,17 @@
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Tương tác giữa tác tử và môi trường trong MDP \cite {SuttonBarto2018}.}}{9}{figure.caption.1}%
+\contentsline {figure}{\numberline {2.2}{\ignorespaces Quy trình lựa chọn hành động và cập nhật Q-table của Q-Learning \cite {WatkinsDayan1992,SuttonBarto2018}.}}{13}{figure.caption.2}%
+\contentsline {figure}{\numberline {2.3}{\ignorespaces Luồng huấn luyện DQN với experience replay và target network \cite {Mnih2013,Mnih2015}.}}{16}{figure.caption.3}%
+\contentsline {figure}{\numberline {2.4}{\ignorespaces Cơ chế lựa chọn và đánh giá hành động khi tính target Double DQN \cite {VanHasselt2016}.}}{17}{figure.caption.4}%
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Kiến trúc tổng thể của ứng dụng học tăng cường trong trò chơi Pacman.}}{19}{figure.caption.6}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Bản đồ \texttt {medium} của môi trường Mini Pacman trong một lượt chạy demo.}}{21}{figure.caption.8}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Các trạng thái hoạt động và quá trình chuyển đổi của ma trong môi trường Mini Pacman.}}{22}{figure.caption.10}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Hai cách biểu diễn state được sử dụng cho Q-Learning và các phương pháp deep Q-learning.}}{24}{figure.caption.11}%
+\contentsline {figure}{\numberline {3.5}{\ignorespaces Kiến trúc Q-network và vai trò của online network, target network trong hai phương pháp.}}{27}{figure.caption.14}%
+\contentsline {figure}{\numberline {3.6}{\ignorespaces Quy trình training, lưu checkpoint, evaluation và lưu mô hình cuối.}}{30}{figure.caption.17}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Reward trong quá trình training, được làm mượt bằng trung bình trượt 50 episode, với các mức learning rate lần lượt từ trên xuống dưới là $0{,}0001$, $0{,}0005$ và $0{,}001$.}}{36}{figure.caption.20}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Completion rate trong quá trình training, được làm mượt bằng trung bình trượt 50 episode, với các mức learning rate lần lượt từ trên xuống dưới là $0{,}0001$, $0{,}0005$ và $0{,}001$.}}{38}{figure.caption.22}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Tỷ lệ thắng tích lũy trong quá trình training, được làm mượt bằng trung bình trượt 50 episode, với các mức learning rate lần lượt từ trên xuống dưới là $0{,}0001$, $0{,}0005$ và $0{,}001$.}}{40}{figure.caption.24}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Số bước trong quá trình training, được làm mượt bằng trung bình trượt 50 episode, với các mức learning rate lần lượt từ trên xuống dưới là $0{,}0001$, $0{,}0005$ và $0{,}001$.}}{42}{figure.caption.26}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces Smooth L1 Loss trong quá trình training, được làm mượt bằng trung bình trượt 50 episode, với các mức learning rate lần lượt từ trên xuống dưới là $0{,}0001$, $0{,}0005$ và $0{,}001$.}}{44}{figure.caption.28}%
+\contentsline {figure}{\numberline {4.6}{\ignorespaces Danh sách lựa chọn final model khi chạy demo.}}{48}{figure.caption.32}%
+\contentsline {figure}{\numberline {4.7}{\ignorespaces Hai trạng thái kết thúc có thể quan sát trong giao diện demo.}}{49}{figure.caption.33}%

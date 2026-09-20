@@ -1,8 +1,46 @@
 {
-  "sizes": [20, 50, 100, 200],
-  "instance_seeds": [301, 302, 303, 304, 305],
-  "search_seeds": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-  "methods": ["B0", "B1", "B2", "B3", "LNS", "ALNS", "ALNS_NO_SCHEDULE", "ALNS_NO_2OPT"],
-  "generator": {"pickers": 3, "capacity": 30, "aisles": 5, "rows": 6, "tightness": 0.15},
-  "search": {"seconds": 5.0, "iterations": 2000, "candidate_limit": 32}
+  "sizes": [
+    20,
+    50,
+    100,
+    200
+  ],
+  "instance_seeds": [
+    301,
+    302,
+    303,
+    304,
+    305
+  ],
+  "search_seeds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "methods": [
+    "B0",
+    "B2",
+    "LNS",
+    "ALNS",
+    "VNS"
+  ],
+  "generator": {
+    "pickers": 3,
+    "capacity": 30,
+    "aisles": 5,
+    "rows": 6,
+    "tightness": 0.15
+  },
+  "search": {
+    "seconds": 5.0,
+    "iterations": 2000,
+    "candidate_limit": 32
+  }
 }

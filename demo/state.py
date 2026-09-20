@@ -45,7 +45,9 @@ def prepare_instance(draft, root, content=None):
 
 
 def methods_for(draft):
-    methods = ["B0", "B1", "B2", "B3", "LNS", "ALNS"] if draft["comparison"] else ["B0", "ALNS"]
+    if draft["comparison"]:
+        return ["B0", "B2", "LNS", "ALNS", "VNS"]
+    methods = ["B0", "ALNS"]
     return methods + (["VNS"] if draft["vns"] else [])
 
 

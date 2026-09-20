@@ -19,7 +19,7 @@ Nguồn Foodmart/HappyChic: [Joint order batching and picker routing — trang t
 
 ## Bộ có thể chạy ngay sau khi tải dữ liệu
 
-**Kris Small:** 81 instance 6 đơn, 81 instance 12 đơn, 81 instance 18 đơn. Đã đọc/chuyển 243/243 instance sang JSON trong [processed/kris_small](processed/kris_small/), có [catalog](processed/kris_small/catalog.json).
+**Kris Small:** nguồn gốc có 81 instance mỗi nhóm 6/12/18 đơn. Bộ đồ án giữ 18 JSON trong [processed/kris_small](processed/kris_small/): 6 file mỗi nhóm; 225 JSON processed còn lại đã xóa. Danh sách và quy tắc chọn cố định trong [kris_selection.json](processed/kris_selection.json); script chuẩn bị chỉ tạo lại 18 file này. Demo và benchmark đọc [catalog](processed/kris_small/catalog.json) gồm đúng 18 instance. Dữ liệu raw và kết quả benchmark cũ được giữ riêng.
 
 Ví dụ:
 

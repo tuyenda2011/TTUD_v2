@@ -1,0 +1,60 @@
+\section{KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN}
+
+\subsection{Kết luận}
+
+Đề tài đã xây dựng môi trường Mini Pacman, cài đặt Q-Learning, DQN và Double DQN, sau đó thực hiện chín cấu hình thí nghiệm trên bản đồ \texttt{medium}. Kết quả thu được đáp ứng các mục tiêu nghiên cứu trong phạm vi đã xác định ở Chương 1. Những kết luận chính gồm:
+
+\begin{enumerate}
+    \item \textbf{Về hệ thống và quy trình thực nghiệm.} Môi trường mô phỏng đầy đủ các thành phần cần thiết của bài toán gồm Pacman, food, power pellet, bonus fruit, ba ma, số mạng và điều kiện kết thúc episode. Repository tổ chức cấu hình bằng YAML, hỗ trợ lưu checkpoint, tiếp tục training, ghi metrics, lưu final model, vẽ biểu đồ và chạy evaluation độc lập với $\epsilon=0$ \cite{DRLPacmanGitHub}. Nhờ đó, chín cấu hình được thực hiện theo cùng một quy trình và có thể đối chiếu bằng cùng nhóm chỉ số.
+
+    \item \textbf{Về kết quả của ba thuật toán.} \tabref{tab:representative-comparison} cho thấy sự khác biệt rõ ràng giữa ba cấu hình đại diện tại episode 20.000.
+    \begin{itemize}
+        \item Q-Learning với $\mathrm{LR}=0{,}001$ không thắng episode nào, cả 20 episode đều kết thúc do bị bắt và completion rate đạt $46{,}29\%$. Kết quả cho thấy Q-table đã tạo ra tiến bộ về khả năng thu thập food, nhưng chưa hình thành policy hoàn thành bản đồ trong giới hạn training của đề tài.
+
+        \item DQN với $\mathrm{LR}=0{,}0005$ thắng 19/20 episode, đạt completion rate $99{,}84\%$ và cần trung bình $138{,}90$ bước. Đây là cấu hình DQN cân bằng nhất trong ba learning rate đã thử.
+
+        \item Double DQN với $\mathrm{LR}=0{,}0001$ cũng thắng 19/20 episode, đạt completion rate $99{,}76\%$ và cần trung bình $148{,}30$ bước. Kết quả gần tương đương DQN về khả năng hoàn thành, nhưng số bước trung bình cao hơn $9{,}40$.
+    \end{itemize}
+
+    Trong thiết kế hiện tại, hai cấu hình sử dụng Q-network đạt kết quả cao hơn Q-Learning. Tuy nhiên, Q-Learning dùng tuple state 17 giá trị, còn DQN và Double DQN dùng vector 92 chiều. Vì vậy, chênh lệch quan sát được chịu ảnh hưởng đồng thời của thuật toán và cách biểu diễn state, không thể được quy hoàn toàn cho riêng thuật toán.
+
+    \item \textbf{Về learning rate và cách đọc metrics.} \tabref{tab:lr-trend} cho thấy learning rate phù hợp phụ thuộc vào từng phương pháp. DQN đạt kết quả tốt nhất tại mức giữa $\mathrm{LR}=0{,}0005$. Với Double DQN, số episode thắng giảm từ 19 xuống 17 và 13 khi learning rate tăng. Q-Learning cải thiện completion rate khi learning rate tăng trong miền khảo sát, nhưng win rate vẫn bằng $0\%$.
+
+    Reward cần được đọc cùng win rate, completion rate và steps. Double DQN với $\mathrm{LR}=0{,}001$ đạt reward cao nhất là $1553{,}422$, nhưng chỉ thắng 13/20 episode và cần trung bình $211{,}65$ bước. Tương tự, sự suy giảm của DQN tại episode 11.000 xuất hiện đồng thời trên nhiều metrics, nhưng một training seed chưa đủ để xác định nguyên nhân là overestimation bias hay catastrophic forgetting.
+\end{enumerate}
+
+Nhìn chung, đề tài đã hoàn thành việc xây dựng môi trường, cài đặt ba thuật toán và tổ chức quy trình so sánh bằng dữ liệu định lượng. Các kết quả chỉ đại diện cho chín cấu hình, một training seed, một evaluation seed và bản đồ \texttt{medium}. Do đó, chúng không được xem là kết luận chung về hiệu quả của các thuật toán trong mọi bài toán học tăng cường.
+
+\subsection{Hướng phát triển}
+
+Các hướng phát triển được đề xuất trực tiếp từ những hạn chế của thiết kế thực nghiệm hiện tại:
+
+\begin{enumerate}
+    \item \textbf{Tăng độ tin cậy của kết quả.}
+    \begin{itemize}
+        \item Training mỗi cấu hình với nhiều seed độc lập, sau đó báo cáo giá trị trung bình, độ lệch chuẩn và khoảng tin cậy.
+        \item Tăng số episode evaluation và sử dụng nhiều evaluation seed để giảm ảnh hưởng của một chuỗi ngẫu nhiên cố định.
+        \item Khảo sát learning rate riêng cho từng thuật toán thay vì dùng chung ba mức cho cả Q-table và optimizer Adam.
+    \end{itemize}
+
+    \item \textbf{Tách ảnh hưởng của thuật toán và biểu diễn state.}
+    \begin{itemize}
+        \item Xây dựng thí nghiệm ablation để so sánh các thuật toán trên cùng tập đặc trưng đầu vào.
+        \item Thử các biến thể state có và không có thông tin về food gần nhất, ma gần nhất, action hợp lệ và action nguy hiểm.
+        \item Khi đã có đường cơ sở công bằng, có thể thử đầu vào ảnh kết hợp mạng nơ-ron tích chập để đánh giá khả năng tự trích xuất đặc trưng.
+    \end{itemize}
+
+    \item \textbf{Mở rộng metrics và thiết kế reward.}
+    \begin{itemize}
+        \item Tách reward theo từng sự kiện như ăn food, ăn ghost, lấy bonus fruit, mất mạng và va tường.
+        \item Ghi thêm số lần đổi hướng, chọn action nguy hiểm và thời gian ở trạng thái frightened để định lượng hành vi trong demo.
+        \item Thử các cấu hình reward khác nhau và đánh giá bằng cả win rate, completion rate lẫn steps thay vì chỉ dựa trên reward tổng.
+    \end{itemize}
+
+    \item \textbf{Mở rộng môi trường và thuật toán.}
+    \begin{itemize}
+        \item Thử nghiệm trên nhiều bản đồ, số lượng ma và mức độ truy đuổi khác nhau để kiểm tra khả năng khái quát của policy.
+        \item Nghiên cứu Dueling DQN và Prioritized Experience Replay trên cùng quy trình evaluation hiện tại.
+        \item Thử các phương pháp Actor-Critic hoặc Proximal Policy Optimization để mở rộng so sánh ngoài nhóm thuật toán dựa trên giá trị.
+    \end{itemize}
+\end{enumerate}
