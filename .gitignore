@@ -1,42 +1,116 @@
-# Local Python environments and generated tooling files
+# ==========================================
+# 1. Python Environments, Bytecode & Build
+# ==========================================
 __pycache__/
 *.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
 .venv/
 venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# ==========================================
+# 2. Testing, Coverage & Type Checking
+# ==========================================
 .pytest_cache/
-.ruff_cache/
-.mypy_cache/
+.pytest_*/
+.pytest-work/
 .coverage
 .coverage.*
 htmlcov/
 coverage.xml
-*.egg-info/
+*.cover
+.ruff_cache/
+.mypy_cache/
 
-# Local credentials (keep shareable examples)
+# ==========================================
+# 3. Environment Secrets & Local Configs
+# ==========================================
 .env
 .env.*
 !.env.example
 !.env.sample
 **/.streamlit/secrets.toml
 
-# Machine-specific tools and editor state
-/.agents/
+# ==========================================
+# 4. OS & IDE Metadata
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+[Tt]humbs.db
+[Ee]hthumbs.db
+[Dd]esktop.ini
 .idea/
 .vscode/
-.DS_Store
-Thumbs.db
+*.swp
+*.swo
+*~
 *.log
 *.prof
 
-# Legacy generated output at repository root
-/output/
+# Machine-specific AI tools
+/.agents/
+/.codex/
 
-# Results and test directories
+# ==========================================
+# 5. Generated Benchmark Results & Outputs
+# ==========================================
 result/
 results/
-test/
-tests/
+/output/
+scratch/
+tmp/
+temp/
 
-# Data and docs directories
-data/
-docs/
+# ==========================================
+# 6. Large Raw Data & Transient Files
+# ==========================================
+# Ignore large raw archives (2.27 GB) and transient synthetic data
+data/raw/
+data/synthetic/
+
+# Converted author benchmark data is local-only unless distribution rights have
+# been confirmed. Keep data/README.md and the catalog instructions trackable.
+data/processed/
+
+# Local evidence archives and checksums are reproducible outputs, not source.
+*.zip
+*.tar
+*.tar.gz
+*.sha256
+
+# Internal planning/review notes kept for local work, not the public project.
+/DANH_GIA_TOAN_DIEN_VA_HUONG_CAI_TIEN.md
+/KE_HOACH_THUC_NGHIEM_VA_BAO_CAO_SO_SANH.md
+/docs/KE_HOACH_CAI_THIEN_DANH_GIA.md
+/docs/KE_HOACH_CHI_TIET.md
+/docs/KE_HOACH_DU_AN.md
+/docs/KE_HOACH_NANG_CAP_MAP_VA_MO_PHONG_DONG.md
+/docs/USER_STUDY.md
+/docs/warehouse-improvement-plan.md
+
+# Local test suite and working documentation are kept outside the public upload.
+/tests/
+/docs/**/*.md

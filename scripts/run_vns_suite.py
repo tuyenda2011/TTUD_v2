@@ -6,8 +6,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from warehouse_opt.benchmark import benchmark
-from warehouse_opt.models import write_json
+from src.benchmark import benchmark
+from src.models import write_json
 
 
 def main():

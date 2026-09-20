@@ -30,7 +30,7 @@ class Objective:
 
 
 class Evaluator:
-    def __init__(self, instance, cache_limit=10000):
+    def __init__(self, instance, cache_limit=10000, incremental_validation=False):
         self.instance = instance.validate()
         self.graph = WarehouseGraph(instance)
         self.router = Router(instance, self.graph)
@@ -42,6 +42,10 @@ class Evaluator:
         self.pick_times = {o.id: sum(self.products[s].pick_minutes * q for s, q in o.items.items()) for o in instance.orders}
         self.info_cache = BoundedCache(cache_limit)
         self.prefix_cache = BoundedCache(cache_limit)
+        self.incremental_validation = incremental_validation
+        self.sequence_masks = BoundedCache(cache_limit)
+        self.order_bits = {oid: 1 << i for i, oid in enumerate(self.orders)}
+        self.all_order_bits = (1 << len(self.orders)) - 1
         self.cost_evaluations = 0
         self.objective = None
 
@@ -59,6 +63,34 @@ class Evaluator:
     def check_plan(self, plan, partial=False):
         if len(plan) != self.instance.operations.pickers:
             raise InputError("Plan must contain exactly one sequence for each picker")
+        if self.incremental_validation:
+            visited = 0
+            for sequence in plan:
+                key = tuple(tuple(batch) for batch in sequence)
+                mask = self.sequence_masks.get(key)
+                if mask is None:
+                    mask = 0
+                    for batch in key:
+                        if not batch:
+                            raise InputError("Empty batch")
+                        load = 0.
+                        for oid in batch:
+                            if oid not in self.order_bits:
+                                raise InputError("Unknown order in plan")
+                            bit = self.order_bits[oid]
+                            if mask & bit:
+                                raise InputError("Order appears more than once")
+                            mask |= bit
+                            load += self.loads[oid]
+                        if load > self.instance.operations.capacity + 1e-9:
+                            raise InputError("Batch exceeds capacity")
+                    self.sequence_masks[key] = mask
+                if visited & mask:
+                    raise InputError("Order appears more than once")
+                visited |= mask
+            if not partial and visited != self.all_order_bits:
+                raise InputError("Plan does not serve every order exactly once")
+            return
         visited = []
         for sequence in plan:
             for batch in sequence:

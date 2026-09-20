@@ -11,11 +11,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from warehouse_opt.generator import generate
-from warehouse_opt.models import read_instance, write_json
-from warehouse_opt.search import SearchConfig
-from warehouse_opt.solver import solve
-from warehouse_opt.validator import validate_solution
+from src.generator import generate
+from src.models import read_instance, write_json
+from src.search import SearchConfig
+from src.solver import solve
+from src.validator import validate_solution
 
 
 def main():
@@ -33,7 +33,7 @@ def main():
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     dirty = bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True))
     hashes = {p.relative_to(ROOT).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
-              for folder in ("warehouse_opt", "demo") for p in sorted((ROOT / folder).glob("*.py"))}
+              for folder in ("src", "demo") for p in sorted((ROOT / folder).glob("*.py"))}
     write_json(output / "config.json", config)
     rows, files = [], []
     started = time.perf_counter()

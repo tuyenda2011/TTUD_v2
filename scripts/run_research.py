@@ -12,16 +12,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from warehouse_opt.benchmark import benchmark
-from warehouse_opt.comparison import paired_comparisons
-from warehouse_opt.evaluator import Evaluator
-from warehouse_opt.exact import solve_exact
-from warehouse_opt.generator import generate
-from warehouse_opt.heuristics import fcfs, greedy, list_schedule
-from warehouse_opt.models import InputError, read_instance, write_json
-from warehouse_opt.search import SearchConfig
-from warehouse_opt.solver import fingerprint, solve
-from warehouse_opt.validator import validate_solution
+from src.benchmark import STOCHASTIC, benchmark
+from src.comparison import paired_comparisons
+from src.evaluator import Evaluator
+from src.exact import solve_exact
+from src.generator import generate
+from src.heuristics import fcfs, greedy, list_schedule
+from src.models import InputError, read_instance, write_json
+from src.search import SearchConfig
+from src.solver import fingerprint, solve
+from src.validator import validate_solution
 
 
 def read(path):
@@ -33,7 +33,7 @@ def digest(path):
 
 
 def source_hashes():
-    files = [*sorted((ROOT / "warehouse_opt").glob("*.py")), Path(__file__).resolve()]
+    files = [*sorted((ROOT / "src").glob("*.py")), Path(__file__).resolve()]
     return {str(p.relative_to(ROOT)).replace("\\", "/"): digest(p) for p in files}
 
 
@@ -62,7 +62,8 @@ def prepare(protocol, output):
         datasets[name] = []
         for n in protocol[name]["sizes"]:
             for seed in protocol[name]["instance_seeds"]:
-                instance = generate(n=n, seed=seed, **protocol["generator"])
+                generator = {**protocol["generator"], **protocol.get("generator_by_seed", {}).get(str(seed), {})}
+                instance = generate(n=n, seed=seed, **generator)
                 instance.name = f"{name}-{instance.name}"
                 path = output / "datasets" / f"{instance.name}.json"
                 write_json(path, instance.to_dict())
@@ -149,15 +150,20 @@ def holdout(output, locked):
     run_benchmark(benchmark_config(output, locked, "holdout", selection(output)), output / "holdout")
 
 
-def ablation(output, locked):
-    base = {**selection(output), "seconds": locked["protocol"]["ablation"]["seconds"]}
+def ablation_variants():
     variants = {"full": ("ALNS", {}), "uniform": ("LNS", {}),
                 "no_schedule_local": ("ALNS_NO_SCHEDULE", {}), "no_2opt_compound": ("ALNS_NO_2OPT", {})}
     for op in ("random", "related", "late", "batch"):
         variants[f"without_{op}"] = ("ALNS", {"destroy_operators": [v for v in SearchConfig().destroy_operators if v != op]})
     variants["greedy_only"] = ("ALNS", {"repair_operators": ["greedy"]})
     variants["regret_only"] = ("ALNS", {"repair_operators": ["regret2"]})
+    return variants
+
+
+def ablation(output, locked):
+    base = {**selection(output), "seconds": locked["protocol"]["ablation"]["seconds"]}
     all_rows = []
+    variants = ablation_variants()
     for name, (method, changes) in variants.items():
         config = benchmark_config(output, locked, "ablation", {**base, **changes}, ["B0", method])
         rows = run_benchmark(config, output / "ablation" / name)
@@ -240,17 +246,78 @@ def exact_and_routing(output, locked):
 
 
 def verify(output, locked):
-    selection(output)
+    chosen_search = selection(output)
     count = 0
     manifests = sorted(p for p in output.rglob("manifest.json") if "source" not in p.parts)
-    expected = len(locked["protocol"]["presets"]) + 1 + 10 + len(locked["protocol"]["weight_profiles"]) + 1
-    if len(manifests) != expected:
-        raise InputError(f"Incomplete study: expected {expected} manifests, found {len(manifests)}")
+    protocol = locked["protocol"]
+    expected_paths = {Path("holdout") / "manifest.json", Path("exact") / "manifest.json"}
+    expected_paths.update(Path("tuning") / name / "manifest.json" for name in protocol["presets"])
+    expected_paths.update(Path("ablation") / name / "manifest.json" for name in ablation_variants())
+    expected_paths.update(Path("sensitivity") / name / "manifest.json" for name in protocol["weight_profiles"])
+    actual_paths = {path.relative_to(output) for path in manifests}
+    if actual_paths != expected_paths:
+        missing, extra = sorted(expected_paths - actual_paths), sorted(actual_paths - expected_paths)
+        raise InputError(f"Incomplete study: missing={missing}, unexpected={extra}")
+
+    def expected_runs(cohort, methods):
+        cohort_config = protocol[cohort]
+        instances = len(cohort_config["sizes"]) * len(cohort_config["instance_seeds"])
+        seeds = len(cohort_config["search_seeds"])
+        return instances * sum(seeds if method in STOCHASTIC else 1 for method in methods)
+
+    expected_counts = {}
+    for name in protocol["presets"]:
+        expected_counts[Path("tuning") / name / "manifest.json"] = expected_runs("tuning", ("B0", "B2", "ALNS"))
+    expected_counts[Path("holdout") / "manifest.json"] = expected_runs("holdout", protocol["methods"])
+    for name, (method, _) in ablation_variants().items():
+        expected_counts[Path("ablation") / name / "manifest.json"] = expected_runs("ablation", ("B0", method))
+    for name in protocol["weight_profiles"]:
+        expected_counts[Path("sensitivity") / name / "manifest.json"] = expected_runs("sensitivity", ("B0", "ALNS"))
+    expected_counts[Path("exact") / "manifest.json"] = len(protocol["exact"]["cases"]) * (1 + len(protocol["methods"]) + 4)
+    expected_configs = {}
+    study_results = {}
+    for name, preset in protocol["presets"].items():
+        expected_configs[Path("tuning") / name / "manifest.json"] = benchmark_config(output, locked, "tuning", {**protocol["search"], **preset}, ["B0", "B2", "ALNS"])
+    expected_configs[Path("holdout") / "manifest.json"] = benchmark_config(output, locked, "holdout", chosen_search)
+    for name, (method, changes) in ablation_variants().items():
+        expected_configs[Path("ablation") / name / "manifest.json"] = benchmark_config(output, locked, "ablation", {**chosen_search, "seconds": protocol["ablation"]["seconds"], **changes}, ["B0", method])
+    for name, weights in protocol["weight_profiles"].items():
+        expected_configs[Path("sensitivity") / name / "manifest.json"] = benchmark_config(output, locked, "sensitivity", chosen_search, ["B0", "ALNS"], weights)
     for path in manifests:
+        relative = path.relative_to(output)
+        manifest = read(path)
+        records = manifest["runs"]
+        if relative in expected_counts and len(records) != expected_counts[relative]:
+            raise InputError(f"Unexpected run count in {relative}: expected {expected_counts[relative]}, found {len(records)}")
+        seen_files = set()
+        seen_keys = set()
         instances = {}
-        for record in read(path)["runs"]:
+        expected_config = expected_configs.get(relative)
+        if expected_config is not None:
+            if manifest["config"] != expected_config:
+                raise InputError(f"Configuration mismatch: {relative}")
+            expected_instances = {read_instance(p).name: fingerprint(read_instance(p)) for p in expected_config["instances"]}
+            expected_keys = {(name, method, seed) for name in expected_instances for method in expected_config["methods"]
+                             for seed in (expected_config["search_seeds"] if method in STOCHASTIC else expected_config["search_seeds"][:1])}
+        else:
+            expected_instances = {read_instance(output / entry["file"]).name: entry["sha256"] for entry in locked["datasets"]["exact"]}
+            expected_keys = {(name, method, None) for name in expected_instances
+                             for method in ["EXACT", *protocol["methods"], *[f"FIXED_PLAN_{m}" for m in ("nn", "2opt", "s_shape", "exact")]]}
+        raw_results = []
+        for record in records:
+            if record["file"] in seen_files:
+                raise InputError(f"Duplicate run file in {path}: {record['file']}")
+            seen_files.add(record["file"])
+            if not (path.parent / record["file"]).is_file():
+                raise InputError(f"Missing raw result: {path.parent / record['file']}")
             result = read(path.parent / record["file"])
             name = result["instance"]
+            key = (name, result["method"], result.get("search", {}).get("seed") if expected_config else None)
+            if key in seen_keys or key not in expected_keys:
+                raise InputError(f"Duplicate or unexpected run identity: {relative}: {key}")
+            seen_keys.add(key)
+            if result["instance_sha256"] != expected_instances.get(name):
+                raise InputError(f"Run uses an unregistered instance: {name}")
             if name not in instances:
                 instances[name] = read_instance(path.parent / "instances" / f"{name}.json")
             instance = instances[name]
@@ -259,7 +326,41 @@ def verify(output, locked):
             errors = validate_solution(instance, result)
             if errors:
                 raise InputError(f"{record['file']}: {errors}")
+            raw_results.append(result)
             count += 1
+        if seen_keys != expected_keys:
+            raise InputError(f"Missing run identities: {relative}: {expected_keys - seen_keys}")
+        if expected_config:
+            verify_aggregates(path.parent, raw_results)
+        study_results[relative] = raw_results
+    ablation_rows = []
+    for name, (method, _) in ablation_variants().items():
+        ablation_rows.extend({**r["metrics"], "instance": r["instance"], "method": name, "feasible": r["feasible"]}
+                             for r in study_results[Path("ablation") / name / "manifest.json"] if r["method"] == method)
+    if read(output / "ablation" / "comparison.json") != paired_comparisons(ablation_rows, ("full",)):
+        raise InputError("Ablation comparison/raw mismatch")
+    sensitivity_rows = []
+    for name in protocol["weight_profiles"]:
+        sensitivity_rows.extend({**r["metrics"], "instance": r["instance"], "profile": name}
+                                for r in study_results[Path("sensitivity") / name / "manifest.json"] if r["method"] == "ALNS")
+    if read(output / "sensitivity" / "summary.json") != pareto_profiles(sensitivity_rows):
+        raise InputError("Sensitivity summary/raw mismatch")
+    exact_results = study_results[Path("exact") / "manifest.json"]
+    oracles = {r["instance"]: r for r in exact_results if r["method"] == "EXACT"}
+    gaps, routing = [], []
+    for result in exact_results:
+        method = result["method"]
+        if method in protocol["methods"]:
+            oracle = oracles[result["instance"]]
+            value, optimum = result["metrics"]["objective"], oracle["metrics"]["objective"]
+            gaps.append({"instance": result["instance"], "method": method, "objective": value,
+                         "exact_objective": optimum, "certified_optimal": oracle["certified_optimal"],
+                         "gap_pct": 100 * (value - optimum) / optimum if oracle["certified_optimal"] and optimum > 0 else None,
+                         "states": oracle["states"]})
+        elif method.startswith("FIXED_PLAN_"):
+            routing.append({"instance": result["instance"], "routing": method.removeprefix("FIXED_PLAN_"), **result["metrics"]})
+    if read(output / "exact" / "summary.json") != gaps or read(output / "exact" / "routing.json") != routing:
+        raise InputError("Exact/routing summary/raw mismatch")
     write_json(output / "verification.json", {"solutions": count, "manifest_count": len(manifests),
                "protocol_sha256": digest(output / "protocol.lock.json"),
                "selection_sha256": digest(output / "selection.lock.json"), "source_matches": True})
@@ -267,7 +368,55 @@ def verify(output, locked):
     return count
 
 
+def verify_aggregates(directory, results):
+    """Reject stale CSV/summary metrics even when every raw solution is feasible."""
+    import csv
+    import math
+    keys = ("objective", "distance", "makespan", "tardiness", "late_orders", "on_time_rate", "total_seconds")
+    by_key = {(r["instance"], r["method"], r["search"]["seed"]): r for r in results}
+    with (directory / "runs.csv").open(encoding="utf-8", newline="") as stream:
+        rows = list(csv.DictReader(stream))
+    seen = set()
+    for row in rows:
+        identity = (row["instance"], row["method"], int(row["search_seed"]))
+        if identity in seen or identity not in by_key:
+            raise InputError(f"Duplicate/unexpected CSV row: {directory}")
+        seen.add(identity)
+        raw = by_key[identity]
+        values = {**raw["metrics"], **raw["timing"]}
+        if any(not math.isclose(float(row[k]), values[k], rel_tol=1e-10, abs_tol=1e-10) for k in keys):
+            raise InputError(f"CSV/raw mismatch: {directory}: {identity}")
+    if seen != set(by_key):
+        raise InputError(f"Missing CSV runs: {directory}")
+    comparison_rows = [{"instance": r["instance"], "method": r["method"], "feasible": r["feasible"],
+                        **r["metrics"]} for r in results]
+    references = read(directory / "config.json").get("references", ["B0", "B2", "B3", "LNS", "VNS"])
+    if read(directory / "comparison.json") != paired_comparisons(comparison_rows, references):
+        raise InputError(f"Comparison/raw mismatch: {directory}")
+    groups = defaultdict(list)
+    for raw in results:
+        groups[raw["instance"], raw["method"]].append({**raw["metrics"], **raw["timing"]})
+    summaries = read(directory / "summary.json")
+    if len(summaries) != len(groups):
+        raise InputError(f"Summary group count mismatch: {directory}")
+    seen = set()
+    for row in summaries:
+        identity = row["instance"], row["method"]
+        if identity not in groups or identity in seen or row["runs"] != len(groups[identity]):
+            raise InputError(f"Summary identity mismatch: {directory}")
+        seen.add(identity)
+        for metric in keys:
+            values = [r[metric] for r in groups[identity]]
+            expected = {"mean": statistics.mean(values), "median": statistics.median(values),
+                        "std": statistics.stdev(values) if len(values) > 1 else 0.,
+                        "best": max(values) if metric == "on_time_rate" else min(values)}
+            if any(not math.isclose(row[metric][k], v, rel_tol=1e-10, abs_tol=1e-10) for k, v in expected.items()):
+                raise InputError(f"Summary/raw mismatch: {directory}: {metric}")
+
+
 def report(output, locked):
+    verify(output, locked)
+    protocol = locked["protocol"]
     selected = checked_seal(output / "selection.lock.json")
     comparisons = read(output / "holdout" / "comparison.json")
     summaries = read(output / "holdout" / "summary.json")
@@ -282,13 +431,14 @@ def report(output, locked):
              f"Protocol SHA-256: `{digest(output / 'protocol.lock.json')}`.", "",
              f"Selection SHA-256: `{digest(output / 'selection.lock.json')}`.", "",
              (f"Preset được chọn trên tuning: **{selected['selected']['name']}**. "
-             "Tuning: 3 instance, 2 search seed, 3 cấu hình; holdout: 6 instance (10/30/100 đơn), "
-             "10 search seed. Các tập tuning, holdout, ablation, sensitivity có seed dữ liệu rời nhau. "
+             f"Tuning: {len(locked['datasets']['tuning'])} instance, {len(protocol['tuning']['search_seeds'])} search seed, "
+             f"{len(protocol['presets'])} cấu hình; holdout: {len(locked['datasets']['holdout'])} instance, "
+             f"{len(protocol['holdout']['search_seeds'])} search seed. Các tập tuning, holdout, ablation, sensitivity có seed dữ liệu rời nhau. "
              "Toàn bộ dữ liệu được tạo và hash trước tuning; cấu hình được khóa trước lần giải holdout đầu tiên. "
              "Trọng số chính bằng nhau được chốt trước; không chọn trọng số bằng cách so F khác thang đo."), "",
-             ("Ngân sách chính 2 giây tính cả khởi tạo, không gồm graph/B0 chung và validation; "
+             (f"Ngân sách chính {protocol['search']['seconds']} giây tính cả khởi tạo, không gồm graph/B0 chung và validation; "
              "mọi thời gian tổng đều được ghi. Trần 100.000 vòng là điều kiện dừng phụ; "
-             "không bảo đảm mọi method tiêu thụ hết 2 giây. Chạy tuần tự trên máy phát triển, không cô lập hệ điều hành."), "",
+             "không bảo đảm mọi method tiêu thụ hết ngân sách. Chạy tuần tự trên máy phát triển, không cô lập hệ điều hành."), "",
              "## ALNS so với đối chứng trên holdout", "",
              "| Reference | Win | Tie | Loss | Mean improvement F (%) |",
              "|---|---:|---:|---:|---:|"]
@@ -304,7 +454,8 @@ def report(output, locked):
         d = row["search_diagnostics"]
         lines.append(f"| {row['instance']} | {d['iterations_min']} | {d['iterations_median']} | {d['adapted_runs']}/{row['runs']} |")
     lines += ["", "## Ablation", "",
-              ("Các biến thể dùng cùng tập riêng, 10 search seed và ngân sách 1 giây. "
+              (f"Các biến thể dùng cùng tập riêng, {len(protocol['ablation']['search_seeds'])} search seed "
+              f"và ngân sách {protocol['ablation']['seconds']} giây. "
               "Uniform chỉ tắt thích nghi (LNS); các phép without_* bỏ đúng một destroy operator; "
               "greedy_only/regret_only bỏ một repair operator. no_schedule_local bỏ lượt local search lịch, "
               "repair vẫn có thể đổi lịch. no_2opt_compound đổi cả khởi tạo và giải mã nên là ablation kết hợp. "
@@ -349,7 +500,7 @@ def report(output, locked):
         lines.append(f"| {row['instance']} | {row['routing']} | {row['distance']:.2f} | {row['makespan']:.3f} | {row['tardiness']:.3f} |")
     lines += ["", "## Giới hạn và việc còn lại", "",
               "- Kết luận phải theo từng đối chứng và kích thước; không mặc định ALNS thắng LNS/VNS.",
-              "- Một layout chính, picker đồng nhất, đơn tĩnh; chưa đo tác động congestion hoặc ca làm việc.",
+              "- Các layout và tham số generator nằm trong protocol.lock.json; picker đồng nhất, đơn tĩnh; chưa đo congestion hoặc ca làm việc.",
               "- Chưa có kiểm định thống kê khẳng định ưu thế, chưa benchmark rộng dữ liệu tác giả.",
               "- Thử với ba người dùng thật chưa thực hiện; phiếu trong docs/USER_STUDY.md không được thay bằng dữ liệu mô phỏng.",
               "- Hash và validator chứng minh tính toàn vẹn/khả thi; chỉ oracle certified mới chứng minh tối ưu cho bài tương ứng.", ""]

@@ -26,11 +26,14 @@ class SearchConfig:
     local_trials: int = 8
     local_every: int = 5
     cache_limit: int = 10000  # entries per cache; 0 is unbounded
+    incremental_validation: bool = False
     destroy_operators: tuple[str, ...] = ("random", "related", "late", "batch")
     repair_operators: tuple[str, ...] = ("greedy", "regret2")
 
     def validate(self):
-        for key, allowed in (("destroy_operators", {"random", "related", "late", "batch"}),
+        if type(self.incremental_validation) is not bool:
+            raise InputError("incremental_validation must be a boolean")
+        for key, allowed in (("destroy_operators", {"random", "related", "late", "batch", "delay_chain"}),
                              ("repair_operators", {"greedy", "regret2"})):
             values = getattr(self, key)
             if (not isinstance(values, (tuple, list)) or not values
@@ -74,6 +77,17 @@ def destroy(ctx, plan, operator, rng, config, mode="2opt"):
     elif operator == "late":
         records = ctx.evaluate(plan, mode, details=True)["orders"]
         removed = [row["id"] for row in sorted(records, key=lambda row: (-row["tardiness"], row["due"], row["id"]))[:count]]
+    elif operator == "delay_chain":
+        # Target the tightest batch and its immediate predecessor, whose duration
+        # delays every order downstream. Repair still minimizes the full objective.
+        batches = ctx.evaluate(plan, mode, details=True)["batches"]
+        target = min(batches, key=lambda b: (min(ctx.orders[o].due for o in b["orders"]) - b["end"], b["id"]))
+        chain = list(target["orders"])
+        predecessors = [b for b in batches if b["picker"] == target["picker"] and b["position"] == target["position"] - 1]
+        if predecessors:
+            before = predecessors[0]["orders"]
+            chain = [chain[0], *before, *chain[1:]]
+        removed = chain[:count]
     elif operator == "batch":
         # Remove a whole batch even if larger than max_removed. It is a distinct neighborhood.
         removed = list(rng.choice([batch for sequence in plan for batch in sequence]))
@@ -196,7 +210,8 @@ def optimize(ctx, initial, seed=42, config=None, adaptive=True, schedule=True, m
     rng = random.Random(seed)
     current = best = initial
     current_cost = best_cost = ctx.cost(initial, mode)
-    destroy_names, repair_names = config.destroy_operators, config.repair_operators
+    destroy_names = tuple(config.destroy_operators)
+    repair_names = tuple(config.repair_operators)
     weights = {name: 1. for name in destroy_names + repair_names}
     uses = {name: 0 for name in weights}
     segment_uses = uses.copy()

@@ -1,10 +1,11 @@
-"""Interactive 60fps HTML5 Canvas/SVG multi-picker simulation for Streamlit."""
+"""HTML5 Canvas replay of a validated multi-picker solution for Streamlit."""
 import json
 import streamlit as st
 import streamlit.components.v1 as components
 
-from warehouse_opt.graph import WarehouseGraph
-from warehouse_opt.units import unit_label
+from src.graph import WarehouseGraph
+from src.models import InputError
+from src.units import time_scale_seconds, unit_label
 
 PICKER_COLORS = [
     "#176b5b",  # P1: Teal
@@ -108,14 +109,66 @@ def build_simulation_data(instance, result):
             })
             curr_t = setup_end
             curr_load = 0
+            already_picked = set()
 
-            # 2. Sequential leg-by-leg routing via stops
+            # Check if any items are located at depot to be picked before departure
+            depot_items = {}
+            for oid in batch["orders"]:
+                order = orders_dict[oid]
+                for item_id, qty in order.items.items():
+                    if item_id not in already_picked and products_dict[item_id].location == instance.depot:
+                        depot_items[item_id] = depot_items.get(item_id, 0) + qty
+
+            if depot_items:
+                for it in depot_items:
+                    already_picked.add(it)
+                d_load = sum(products_dict[it].size * q for it, q in depot_items.items())
+                d_pick_time = sum(products_dict[it].pick_minutes * q for it, q in depot_items.items())
+                d_dur = op.location_minutes + d_pick_time
+                segments.append({
+                    "t_start": curr_t,
+                    "t_end": curr_t + d_dur,
+                    "x1": depot_node.x, "y1": depot_node.y,
+                    "x2": depot_node.x, "y2": depot_node.y,
+                    "state": "picking",
+                    "node": instance.depot,
+                    "load": curr_load + d_load,
+                    "batch_id": batch["id"],
+                    "info": f"Lấy hàng tại {instance.depot} (+{int(d_load)} SP)",
+                    "pick_qty": int(d_load),
+                    "pick_items": depot_items
+                })
+                curr_t += d_dur
+                curr_load += d_load
+
+            # 2. Sequential leg-by-leg routing via stops (replaying batch['walk'] if available)
             stops = batch["stops"]
+            walk = tuple(batch.get("walk") or ())
+            if not walk or walk[0] != instance.depot or walk[-1] != instance.depot:
+                raise InputError(f"Batch {batch['id']} has no complete depot-to-depot walk")
+            walk_idx = 0
+            traveled_distance = 0.0
+
             for stop_from, stop_to in zip(stops, stops[1:]):
-                sub_path = graph.path(stop_from, stop_to)
+                if walk_idx >= len(walk) or walk[walk_idx] != stop_from:
+                    raise InputError(f"Batch {batch['id']} service stops do not follow its walk")
+                if stop_from == stop_to:
+                    sub_path = (stop_from,)
+                else:
+                    try:
+                        next_idx = walk.index(stop_to, walk_idx + 1)
+                    except ValueError as exc:
+                        raise InputError(f"Batch {batch['id']} walk misses service stop {stop_to}") from exc
+                    sub_path = walk[walk_idx:next_idx + 1]
+                    walk_idx = next_idx
+
                 for u_id, v_id in zip(sub_path, sub_path[1:]):
-                    u_node, v_node = nodes_dict[u_id], nodes_dict[v_id]
-                    dist = graph.adj[u_id][v_id]
+                    try:
+                        u_node, v_node = nodes_dict[u_id], nodes_dict[v_id]
+                        dist = graph.adj[u_id][v_id]
+                    except KeyError as exc:
+                        raise InputError(f"Batch {batch['id']} walk contains an unknown edge") from exc
+                    traveled_distance += dist
                     travel_dur = dist / op.speed if op.speed > 0 else 0
 
                     segments.append({
@@ -123,6 +176,7 @@ def build_simulation_data(instance, result):
                         "t_end": curr_t + travel_dur,
                         "x1": u_node.x, "y1": u_node.y,
                         "x2": v_node.x, "y2": v_node.y,
+                        "distance": dist,
                         "state": "traveling",
                         "node": v_id,
                         "load": curr_load,
@@ -131,15 +185,17 @@ def build_simulation_data(instance, result):
                     })
                     curr_t += travel_dur
 
-                # Arrived at stop_to: pick items if it's not depot
-                if stop_to != instance.depot:
-                    picked_items = {}
-                    for oid in batch["orders"]:
-                        order = orders_dict[oid]
-                        for item_id, qty in order.items.items():
-                            if products_dict[item_id].location == stop_to:
-                                picked_items[item_id] = picked_items.get(item_id, 0) + qty
+                # Arrived at stop_to: pick items if any are located here
+                picked_items = {}
+                for oid in batch["orders"]:
+                    order = orders_dict[oid]
+                    for item_id, qty in order.items.items():
+                        if item_id not in already_picked and products_dict[item_id].location == stop_to:
+                            picked_items[item_id] = picked_items.get(item_id, 0) + qty
 
+                if picked_items:
+                    for it in picked_items:
+                        already_picked.add(it)
                     stop_load = sum(products_dict[it].size * q for it, q in picked_items.items())
                     stop_pick_time = sum(products_dict[it].pick_minutes * q for it, q in picked_items.items())
                     stop_dur = op.location_minutes + stop_pick_time
@@ -161,7 +217,13 @@ def build_simulation_data(instance, result):
                     curr_load += stop_load
 
             # 3. Batch completion at depot
-            end_t = max(curr_t, batch["end"])
+            if abs(traveled_distance - batch["distance"]) > 1e-7:
+                raise InputError(f"Batch {batch['id']} simulation distance disagrees with evaluator")
+            if abs(curr_load - batch["load"]) > 1e-7:
+                raise InputError(f"Batch {batch['id']} simulation load disagrees with evaluator")
+            if abs(curr_t - batch["end"]) > 1e-7:
+                raise InputError(f"Batch {batch['id']} simulation time disagrees with evaluator")
+            end_t = curr_t
             segments.append({
                 "t_start": curr_t,
                 "t_end": end_t,
@@ -193,8 +255,8 @@ def build_simulation_data(instance, result):
             "tardiness": o["tardiness"]
         })
 
-    native = instance.metadata.get("units", {}).get("time") == "source_time_unit"
     time_unit = unit_label(instance, "time")
+    time_scale = time_scale_seconds(instance)
 
     payload = {
         "depot": {"id": instance.depot, "x": nodes_dict[instance.depot].x, "y": nodes_dict[instance.depot].y},
@@ -209,14 +271,15 @@ def build_simulation_data(instance, result):
         "makespan": result["metrics"]["makespan"],
         "late_orders": result["metrics"]["late_orders"],
         "total_distance": result["metrics"]["distance"],
-        "is_source_units": native,
-        "time_unit": time_unit
+        "is_source_units": time_scale == 1.0,
+        "time_unit": time_unit,
+        "time_scale_seconds": time_scale
     }
     return payload
 
 
 def render_simulation(instance, result, height=750):
-    """Renders the self-contained 60fps dynamic warehouse simulation."""
+    """Render a self-contained replay of the validated warehouse timeline."""
     data = build_simulation_data(instance, result)
     json_str = json.dumps(data, ensure_ascii=False)
 
@@ -290,11 +353,14 @@ def render_simulation(instance, result, height=750):
     display: flex;
     align-items: center;
     gap: 10px;
-    flex: 1;
-    min-width: 220px;
+    flex: 1 1 440px;
+    min-width: 0;
+    flex-wrap: wrap;
   }}
   .timeline-slider {{
     flex: 1;
+    width: 0;
+    min-width: 100px;
     -webkit-appearance: none;
     height: 6px;
     border-radius: 3px;
@@ -320,9 +386,11 @@ def render_simulation(instance, result, height=750):
     padding: 4px 10px;
     border-radius: 5px;
     border: 1px solid #334155;
-    min-width: 250px;
+    min-width: 0;
+    max-width: 100%;
     text-align: center;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }}
   .view-select {{
     background: #334155;
@@ -464,8 +532,8 @@ def render_simulation(instance, result, height=750):
   let speedMultiplier = 1.0;
   let focusPicker = "all"; // "all" or picker id (1..N)
   let lastTimestamp = null;
-  const isSourceUnits = Boolean(simData.is_source_units);
-  const timeUnit = simData.time_unit || (isSourceUnits ? "giây" : "phút");
+  const timeUnit = simData.time_unit || "đơn vị thời gian";
+  const timeScaleSeconds = Number.isFinite(simData.time_scale_seconds) ? simData.time_scale_seconds : null;
   const makespan = Math.max(1.0, simData.makespan);
 
   // Auto-scale base speed so the full simulation plays comfortably in ~30 seconds at 1x
@@ -500,7 +568,8 @@ def render_simulation(instance, result, height=750):
 
   // Init slider
   timelineSlider.max = makespan;
-  timelineSlider.step = makespan > 1000 ? 1 : 0.05;
+  // A fixed step rounds the end down when makespan is not a multiple of it.
+  timelineSlider.step = "any";
   timelineSlider.value = 0;
 
   // Init options and HUD
@@ -596,7 +665,8 @@ def render_simulation(instance, result, height=750):
   }});
 
   timelineSlider.addEventListener("input", (e) => {{
-    simTime = parseFloat(e.target.value);
+    simTime = Math.min(makespan, Math.max(0, parseFloat(e.target.value)));
+    if (makespan - simTime < 1e-9) simTime = makespan;
     updateHUD();
   }});
 
@@ -661,7 +731,7 @@ def render_simulation(instance, result, height=750):
 
     // After last batch
     const lastSeg = segments[segments.length - 1];
-    if (t >= lastSeg.t_end) {{
+    if (t >= lastSeg.t_end - 1e-9) {{
       return {{ x: lastSeg.x2, y: lastSeg.y2, state: "idle", load: 0, info: "Hoàn tất nhiệm vụ", pick_qty: 0, heading: 0, setup_pct: 100 }};
     }}
 
@@ -707,7 +777,10 @@ def render_simulation(instance, result, height=750):
 
   // Unified clock formatting
   function formatClock(val, hasHours) {{
-    const totalSec = Math.max(0, Math.round(isSourceUnits ? val : val * 60));
+    if (timeScaleSeconds === null) {{
+      return `${{Math.max(0, val).toFixed(2)}} ${{timeUnit}}`;
+    }}
+    const totalSec = Math.max(0, Math.round(val * timeScaleSeconds));
     const h = Math.floor(totalSec / 3600);
     const m = Math.floor((totalSec % 3600) / 60);
     const s = totalSec % 60;
@@ -718,14 +791,14 @@ def render_simulation(instance, result, height=750):
   }}
 
   function formatTimeBadge(curVal, maxVal) {{
-    const maxSec = isSourceUnits ? maxVal : maxVal * 60;
+    if (timeScaleSeconds === null) {{
+      return `⏱️ ${{formatClock(curVal, false)}} / ${{formatClock(maxVal, false)}}`;
+    }}
+    const maxSec = maxVal * timeScaleSeconds;
     const hasHours = maxSec >= 3600;
     const curClock = formatClock(curVal, hasHours);
     const maxClock = formatClock(maxVal, hasHours);
 
-    if (isSourceUnits) {{
-      return `⏱️ ${{curClock}} / ${{maxClock}} (${{Math.round(curVal).toLocaleString()}} / ${{Math.round(maxVal).toLocaleString()}} ${{timeUnit}})`;
-    }}
     return `⏱️ ${{curClock}} / ${{maxClock}} (${{curVal.toFixed(1)}} / ${{maxVal.toFixed(1)}} ${{timeUnit}})`;
   }}
 
@@ -749,7 +822,7 @@ def render_simulation(instance, result, height=750):
     }});
   }}
 
-  // Main Render Loop (60fps)
+  // Main render loop
   function render(timestamp) {{
     syncCanvasSize();
 
@@ -847,7 +920,7 @@ def render_simulation(instance, result, height=750):
     ctx.fillText("DEPOT", dsx, dsy);
 
     // 5. Calculate and draw pickers
-    const aisleSpan = isSourceUnits ? 24 : 8;
+    const aisleSpan = 8;
     const aisleScreenDist = aisleSpan * T.scale;
     const pickerRadius = Math.max(6, Math.min(12, Math.max(7, aisleScreenDist * 0.75)));
     const colOffset = Math.min(pickerRadius + 1, 10);
@@ -1009,7 +1082,7 @@ def render_simulation(instance, result, height=750):
     requestAnimationFrame(render);
   }}
 
-  // Initialize display and start 60fps loop
+  // Initialize display and start the render loop
   updateHUD();
   requestAnimationFrame(render);
 </script>

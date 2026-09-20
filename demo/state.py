@@ -2,10 +2,10 @@
 import hashlib
 import json
 
-from warehouse_opt.generator import MAP_SCENARIOS, generate
-from warehouse_opt.models import InputError, Instance, read_instance
-from warehouse_opt.search import SearchConfig
-from warehouse_opt.solver import solve
+from src.generator import MAP_SCENARIOS, generate_scenario
+from src.models import InputError, Instance, read_instance
+from src.search import SearchConfig
+from src.solver import solve
 
 SYNTHETIC = "Dữ liệu tổng hợp — chỉ kiểm thử"
 KRIS = "Kris — benchmark tác giả"
@@ -19,17 +19,16 @@ def upload_digest(content):
 def prepare_instance(draft, root, content=None):
     if draft["source"] == SYNTHETIC:
         scenario_key = draft.get("scenario", "single_block")
-        scen_cfg = MAP_SCENARIOS.get(scenario_key, MAP_SCENARIOS["single_block"])
-        return generate(
-            n=draft.get("orders", scen_cfg["n"]),
+        if scenario_key not in MAP_SCENARIOS:
+            raise InputError(f"Unknown scenario {scenario_key}; choose {tuple(MAP_SCENARIOS)}")
+        scen_cfg = MAP_SCENARIOS[scenario_key]
+        return generate_scenario(
+            scenario_key,
             seed=draft.get("seed", 42),
+            n=draft.get("orders", scen_cfg["n"]),
             pickers=draft.get("pickers", scen_cfg["pickers"]),
             capacity=draft.get("capacity", scen_cfg["capacity"]),
-            aisles=scen_cfg["aisles"],
-            rows=scen_cfg["rows"],
             tightness=draft.get("tightness", scen_cfg["tightness"]),
-            cross_aisles=scen_cfg["cross_aisles"],
-            demand_pattern=scen_cfg["demand_pattern"],
         )
     if draft["source"] == KRIS:
         if not draft.get("file"):

@@ -6,10 +6,10 @@ import sys
 import tracemalloc
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from warehouse_opt.generator import generate
-from warehouse_opt.models import write_json
-from warehouse_opt.search import SearchConfig
-from warehouse_opt.solver import solve
+from src.generator import generate
+from src.models import write_json
+from src.search import SearchConfig
+from src.solver import solve
 
 
 def main():

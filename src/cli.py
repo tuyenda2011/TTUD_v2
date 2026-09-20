@@ -4,7 +4,7 @@ from pathlib import Path
 
 from .benchmark import benchmark
 from .exact import solve_exact
-from .generator import generate
+from .generator import MAP_SCENARIOS, generate, generate_scenario
 from .models import InputError, read_instance, write_json
 from .search import SearchConfig
 from .solver import METHODS, solve
@@ -15,13 +15,15 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description="Warehouse batching + routing + picker scheduling")
     sub = parser.add_subparsers(dest="command", required=True)
     gen = sub.add_parser("generate", help="Generate a reproducible synthetic instance")
-    gen.add_argument("--orders", type=int, default=30)
+    gen.add_argument("--scenario", choices=list(MAP_SCENARIOS.keys()), default=None,
+                     help="Predefined warehouse scenario (single_block, double_block, mega_hub, rush_hour, abc_zonal)")
+    gen.add_argument("--orders", type=int, default=None)
     gen.add_argument("--seed", type=int, default=42)
-    gen.add_argument("--pickers", type=int, default=3)
-    gen.add_argument("--capacity", type=float, default=30.)
-    gen.add_argument("--aisles", type=int, default=5)
-    gen.add_argument("--rows", type=int, default=6)
-    gen.add_argument("--tightness", type=float, default=.25)
+    gen.add_argument("--pickers", type=int, default=None)
+    gen.add_argument("--capacity", type=float, default=None)
+    gen.add_argument("--aisles", type=int, default=None)
+    gen.add_argument("--rows", type=int, default=None)
+    gen.add_argument("--tightness", type=float, default=None)
     gen.add_argument("--output", required=True)
     run = sub.add_parser("solve", help="Optimize a schema-v1 JSON instance")
     run.add_argument("instance")
@@ -46,7 +48,29 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         if args.command == "generate":
-            instance = generate(args.orders, args.seed, args.pickers, args.capacity, args.aisles, args.rows, args.tightness)
+            if args.scenario:
+                overrides = {}
+                if args.orders is not None:
+                    overrides["n"] = args.orders
+                if args.pickers is not None:
+                    overrides["pickers"] = args.pickers
+                if args.capacity is not None:
+                    overrides["capacity"] = args.capacity
+                if args.aisles is not None:
+                    overrides["aisles"] = args.aisles
+                if args.rows is not None:
+                    overrides["rows"] = args.rows
+                if args.tightness is not None:
+                    overrides["tightness"] = args.tightness
+                instance = generate_scenario(args.scenario, seed=args.seed, **overrides)
+            else:
+                orders = 30 if args.orders is None else args.orders
+                pickers = 3 if args.pickers is None else args.pickers
+                capacity = 30. if args.capacity is None else args.capacity
+                aisles = 5 if args.aisles is None else args.aisles
+                rows = 6 if args.rows is None else args.rows
+                tightness = .25 if args.tightness is None else args.tightness
+                instance = generate(orders, args.seed, pickers, capacity, aisles, rows, tightness)
             write_json(args.output, instance.to_dict())
             print(f"Generated {instance.name}: {len(instance.orders)} orders -> {args.output}")
         elif args.command == "solve":

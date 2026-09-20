@@ -46,6 +46,8 @@ def generate(n=30, seed=42, pickers=3, capacity=30., aisles=5, rows=6, tightness
         raise InputError("n, pickers, aisles and rows must be positive integers")
     if type(cross_aisles) is not int or cross_aisles < 0:
         raise InputError("cross_aisles must be a non-negative integer")
+    if demand_pattern not in ("uniform", "abc_zonal"):
+        raise InputError("Unknown demand_pattern; choose 'uniform' or 'abc_zonal'")
     from .models import number
     number(capacity, "capacity", strict=True)
     number(tightness, "tightness", strict=True)
@@ -75,13 +77,37 @@ def generate(n=30, seed=42, pickers=3, capacity=30., aisles=5, rows=6, tightness
             for cr in cross_rows:
                 edges.append(Edge(aisle_ids[a - 1][cr], ids[cr], 8.))
 
+    abc_zones = None
     if demand_pattern == "abc_zonal" and products:
+        # Compute exact shortest path graph distance from depot for true ABC zoning
+        from collections import defaultdict
+        import heapq
+        adj = defaultdict(list)
+        for e in edges:
+            adj[e.source].append((e.target, e.distance))
+            adj[e.target].append((e.source, e.distance))
+        depot_id = aisle_ids[0][0]
+        dist_from_depot = {depot_id: 0.0}
+        pq = [(0.0, depot_id)]
+        while pq:
+            d, u = heapq.heappop(pq)
+            if d > dist_from_depot.get(u, float("inf")):
+                continue
+            for v, w in adj[u]:
+                if d + w < dist_from_depot.get(v, float("inf")):
+                    dist_from_depot[v] = d + w
+                    heapq.heappush(pq, (d + w, v))
+
         # 20% SKU closest to depot get 70% weight, next 30% get 20%, remaining 50% get 10%
-        # Distance from depot at (0, 0)
-        sorted_prods = sorted(products, key=lambda p: int(p.location.split("-")[0][1:]) + int(p.location.split("-")[1][1:]))
+        sorted_prods = sorted(products, key=lambda p: (dist_from_depot.get(p.location, float("inf")), p.id))
         n_p = len(sorted_prods)
         idx_a = max(1, int(n_p * 0.2))
         idx_b = max(idx_a + 1, int(n_p * 0.5))
+        abc_zones = {
+            "A": [p.id for p in sorted_prods[:idx_a]],
+            "B": [p.id for p in sorted_prods[idx_a:idx_b]],
+            "C": [p.id for p in sorted_prods[idx_b:]],
+        }
         weights = []
         for i, p in enumerate(sorted_prods):
             if i < idx_a:
@@ -129,11 +155,15 @@ def generate(n=30, seed=42, pickers=3, capacity=30., aisles=5, rows=6, tightness
     if cross_aisles > 0:
         layout_info["cross_aisles"] = cross_rows
 
+    metadata = {"source": "synthetic/internal-v1", "seed": seed,
+                "demand_pattern": demand_pattern,
+                "units": {"distance": "metre", "time": "minute", "capacity": "item"},
+                "layout": layout_info,
+                "due_dates": {"synthetic": True, "rule": "p_i + tau * H * (1 + spread * U_i)", "tightness": tightness, "spread": spread, "reference_pickers": pickers}}
+    if abc_zones is not None:
+        metadata["demand_zones"] = abc_zones
     instance = Instance(f"synthetic-n{n}-seed{seed}", aisle_ids[0][0], nodes, edges, products, orders,
-        Operations(pickers=pickers, capacity=capacity),
-        {"source": "synthetic/internal-v1", "seed": seed, "units": {"distance": "metre", "time": "minute", "capacity": "item"},
-         "layout": layout_info,
-         "due_dates": {"synthetic": True, "rule": "p_i + tau * H * (1 + spread * U_i)", "tightness": tightness, "spread": spread, "reference_pickers": pickers}})
+        Operations(pickers=pickers, capacity=capacity), metadata)
     ctx = Evaluator(instance)
     individual = [ctx.batch_info((o.id,), "nn")[2] for o in orders]
     horizon = max(max(individual), sum(individual) / pickers)
@@ -143,10 +173,22 @@ def generate(n=30, seed=42, pickers=3, capacity=30., aisles=5, rows=6, tightness
 
 
 def generate_scenario(scenario_key="single_block", seed=42, **overrides):
-    config = dict(MAP_SCENARIOS.get(scenario_key, MAP_SCENARIOS["single_block"]))
+    if scenario_key not in MAP_SCENARIOS:
+        raise InputError(f"Unknown scenario {scenario_key}; choose {tuple(MAP_SCENARIOS)}")
+    scenario = MAP_SCENARIOS[scenario_key]
+    config = dict(scenario)
     config.pop("name", None)
     config.pop("description", None)
     config.update(overrides)
     config["seed"] = seed
-    return generate(**config)
+    instance = generate(**config)
+    if scenario_key != "single_block":
+        instance.name = f"{scenario_key}-{instance.name}"
+    instance.metadata["scenario"] = {
+        "id": scenario_key,
+        "name": scenario["name"],
+        "description": scenario["description"],
+        "parameters": {key: config[key] for key in ("n", "pickers", "capacity", "aisles", "rows", "tightness", "cross_aisles", "demand_pattern") if key in config},
+    }
+    return instance.validate()
 

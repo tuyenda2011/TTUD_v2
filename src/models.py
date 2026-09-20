@@ -94,7 +94,7 @@ class Instance:
                 raise InputError(f"Duplicate {label} ID")
         node_ids = {node.id for node in self.nodes}
         layout = self.metadata.get("layout", {})
-        if layout.get("type") == "single_block":
+        if layout.get("type") in ("single_block", "multi_block"):
             aisles = layout.get("aisles")
             if not isinstance(aisles, list) or not aisles or any(
                 not isinstance(aisle, list) or len(aisle) < 2
@@ -102,6 +102,21 @@ class Instance:
                 for aisle in aisles
             ):
                 raise InputError("metadata.layout.aisles must list aisles with at least two existing node IDs")
+            aisle_lengths = {len(aisle) for aisle in aisles}
+            if len(aisle_lengths) != 1:
+                raise InputError("metadata.layout.aisles must have equal lengths")
+            if layout.get("type") == "multi_block":
+                cross_aisles = layout.get("cross_aisles")
+                valid_cross = (isinstance(cross_aisles, list) and bool(cross_aisles)
+                               and all(type(r) is int and r >= 0 and all(r < len(aisle) for aisle in aisles)
+                                       for r in cross_aisles))
+                if not valid_cross or len(set(cross_aisles)) != len(cross_aisles):
+                    raise InputError("metadata.layout.cross_aisles must be a list of valid row indices within aisles")
+                edge_keys = {frozenset((edge.source, edge.target)) for edge in self.edges}
+                for row in cross_aisles:
+                    if any(frozenset((left[row], right[row])) not in edge_keys
+                           for left, right in zip(aisles, aisles[1:])):
+                        raise InputError("metadata.layout.cross_aisles must match edges between adjacent aisles")
         if self.depot not in node_ids:
             raise InputError("Depot not found in graph")
         for node in self.nodes:

@@ -26,7 +26,7 @@ def solve(instance, method="ALNS", seed=42, config=None, weights=(1/3, 1/3, 1/3)
         raise InputError(f"Unknown method {method}; choose {METHODS}")
     config = (config or SearchConfig()).validate()
     total_started = time.perf_counter()
-    ctx = Evaluator(instance, config.cache_limit)
+    ctx = Evaluator(instance, config.cache_limit, config.incremental_validation)
     baseline = list_schedule(ctx, fcfs(ctx), "nn")
     ctx.set_reference(baseline, weights)
     preprocessing = time.perf_counter() - total_started

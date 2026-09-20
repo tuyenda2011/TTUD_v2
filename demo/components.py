@@ -7,10 +7,10 @@ import streamlit as st
 
 from demo.simulation import render_simulation
 from demo.state import KRIS, SYNTHETIC, UPLOAD, improvement, upload_digest
-from warehouse_opt.generator import MAP_SCENARIOS
-from warehouse_opt.models import Instance
-from warehouse_opt.plots import gantt_figure, warehouse_figure
-from warehouse_opt.units import unit_label
+from src.generator import MAP_SCENARIOS
+from src.models import Instance
+from src.plots import gantt_figure, warehouse_figure
+from src.units import time_scale_seconds, unit_label
 
 
 def style():
@@ -168,34 +168,30 @@ def results_view(snapshot):
         ]:
             st.download_button(label, json.dumps(data, ensure_ascii=False, indent=2),
                                file_name=filename, mime="application/json", key=filename)
-    native = instance.metadata.get("units", {}).get("time") == "source_time_unit"
     time_unit, distance_unit = unit_label(instance, "time"), unit_label(instance, "distance")
+    time_scale = time_scale_seconds(instance)
     metrics, baseline = result["metrics"], results["B0"]["metrics"]
     col1, col2, col3 = st.columns(3)
     col1.metric("Đơn trễ", f"{metrics['late_orders']} đơn")
 
-    if native:
-        total_sec = metrics["makespan"]
+    if time_scale is not None:
+        total_sec = metrics["makespan"] * time_scale
         hours = int(total_sec // 3600)
         mins = int((total_sec % 3600) // 60)
         time_display = f"{hours}h {mins:02d}m" if hours > 0 else f"{mins}m {int(total_sec % 60):02d}s"
-        col2.metric("Thời gian hoàn tất", time_display, delta=f"{total_sec:,.0f} giây gốc", delta_color="off",
-                    help="Thời gian quy đổi từ đơn vị giây của benchmark Kris (1 đv nguồn = 1 giây)")
-
-        dist_m = metrics["distance"]
-        dist_display = f"{dist_m / 1000:.1f} km" if dist_m >= 1000 else f"{dist_m:,.0f} m"
-        col3.metric("Quãng đường", dist_display, delta=f"{dist_m:,.0f} m gốc", delta_color="off",
-                    help="Tổng quãng đường di chuyển theo mét/km")
+        col2.metric("Thời gian hoàn tất", f"{time_display} — {metrics['makespan']:,.1f} {time_unit}",
+                    delta=f"{total_sec:,.0f} giây quy đổi", delta_color="off",
+                    help=f"Quy đổi theo {time_scale:g} giây cho mỗi đơn vị thời gian đã khai báo")
+        col3.metric("Quãng đường", f"{metrics['distance']:,.1f} {distance_unit}")
     else:
         mins_val = metrics["makespan"]
-        m = int(mins_val)
-        s = int(round((mins_val - m) * 60))
-        col2.metric("Thời gian hoàn tất", f"{mins_val:,.1f} {time_unit}", delta=f"{m}m {s:02d}s", delta_color="off")
+        col2.metric("Thời gian hoàn tất", f"{mins_val:,.1f} {time_unit}",
+                    delta="Không quy đổi đơn vị nguồn", delta_color="off")
         col3.metric("Quãng đường", f"{metrics['distance']:,.1f} {distance_unit}")
     sim_tab, overview, routes, details = st.tabs(["🎮 Mô phỏng động", "Tổng quan", "Tuyến & lịch", "Chi tiết"])
     with sim_tab:
-        st.subheader("Mô phỏng kho hàng thời gian thực (Digital Twin)")
-        st.caption("Chạy mượt mà 60fps trên trình duyệt · Hỗ trợ 3–6+ nhân viên đồng thời · Điều khiển Play/Pause/Tua/Tốc độ")
+        st.subheader("Mô phỏng phát lại nghiệm kho")
+        st.caption("Phát lại timeline tĩnh trên trình duyệt · Hỗ trợ nhiều nhân viên · Điều khiển Play/Pause/Tua/Tốc độ")
         render_simulation(instance, result)
     with overview:
         st.subheader("Kết quả của phương án")
@@ -209,8 +205,8 @@ def results_view(snapshot):
                 direction = "giảm" if pct >= 0 else "tăng"
                 st.write(f"Quãng đường {direction} **{abs(pct):.1f}%** so với phương án cơ sở B0.")
         st.caption("Hạn mềm: phương án hợp lệ vẫn có thể có đơn trễ. Kết quả đã được kiểm tra tải, tuyến và lịch.")
-        if native:
-            st.caption("Kris giữ nguyên đơn vị nguồn, không đối chiếu trực tiếp với bài toán hạn cứng của tác giả.")
+        if time_scale is None:
+            st.caption("Dữ liệu giữ nguyên đơn vị nguồn; chưa quy đổi sang giây/phút.")
         research_view(instance, results, result)
     with routes:
         route_view(instance, result)

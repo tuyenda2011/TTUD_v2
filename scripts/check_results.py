@@ -4,9 +4,9 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from warehouse_opt.models import read_instance
-from warehouse_opt.validator import validate_solution
-from warehouse_opt.solver import fingerprint
+from src.models import read_instance
+from src.validator import validate_solution
+from src.solver import fingerprint
 
 
 def main():

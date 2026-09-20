@@ -17,8 +17,8 @@ from demo.state import (
     run_scenario,
     start_run,
 )
-from warehouse_opt.demo_snapshot import validate_snapshot
-from warehouse_opt.models import Instance
+from src.demo_snapshot import validate_snapshot
+from src.models import Instance
 
 st.set_page_config(page_title="Tối ưu lấy hàng", page_icon="📦", layout="wide")
 style()

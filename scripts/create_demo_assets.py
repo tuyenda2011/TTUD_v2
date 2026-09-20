@@ -9,12 +9,12 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from warehouse_opt.exact import solve_exact
-from warehouse_opt.generator import generate
-from warehouse_opt.models import write_json
-from warehouse_opt.plots import convergence_figure, gantt_figure, warehouse_figure
-from warehouse_opt.search import SearchConfig
-from warehouse_opt.solver import solve
+from src.exact import solve_exact
+from src.generator import generate
+from src.models import write_json
+from src.plots import convergence_figure, gantt_figure, warehouse_figure
+from src.search import SearchConfig
+from src.solver import solve
 
 
 def main():

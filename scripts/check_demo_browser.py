@@ -9,9 +9,10 @@ sys.path.insert(0, str(ROOT))
 
 from playwright.sync_api import expect, sync_playwright
 
-from warehouse_opt.demo_snapshot import validate_snapshot
-from warehouse_opt.models import Instance
-from warehouse_opt.validator import validate_solution
+from src.demo_snapshot import validate_snapshot
+from src.models import Instance
+from src.generator import generate
+from src.validator import validate_solution
 
 
 def main():
@@ -27,7 +28,7 @@ def main():
         page = browser.new_page(viewport={"width": 1440, "height": 900})
         page.on("pageerror", lambda error: errors.append(str(error)))
         page.goto(args.url)
-        expect(page.get_by_role("button", name="Chạy với cấu hình này", exact=True)).to_be_visible()
+        expect(page.get_by_role("button", name="Chạy với cấu hình này", exact=True)).to_be_visible(timeout=45000)
         expect(page.locator('[data-testid="stSkeleton"]')).to_have_count(0)
         page.screenshot(path=str(output / "after-desktop-empty.png"), full_page=True)
 
@@ -89,6 +90,14 @@ def main():
         page.locator('img:visible').first.screenshot(path=str(output / "route-30.png"))
         checks.append("changed draft marked stale; 30-order rerun")
 
+        select("scenario", "🟡 Kho 2 khối có lối đi giữa (Double-Block)")
+        run("double_block-synthetic-n30-seed42")
+        page.get_by_role("tab", name="🎮 Mô phỏng động", exact=True).click()
+        expect(page.get_by_text("Mô phỏng phát lại nghiệm kho", exact=True)).to_be_visible()
+        assert page.get_by_test_id("stException").count() == 0
+        page.screenshot(path=str(output / "after-double-block.png"), full_page=True)
+        checks.append("double-block scenario and replay tab")
+
         select("source", "JSON tải lên")
         expect(page.locator(".st-key-orders")).to_have_count(0)
         upload = page.locator('.st-key-upload input[type="file"]')
@@ -101,11 +110,12 @@ def main():
         settled()
         page.get_by_role("button", name="Remove invalid.json", exact=True).click()
         expect(page.get_by_role("button", name="Remove invalid.json", exact=True)).to_have_count(0)
-        upload.set_input_files(ROOT / "data/synthetic/tiny_4.json")
+        tiny = generate(n=4, seed=42)
+        upload.set_input_files({"name": "tiny_4.json", "mimeType": "application/json",
+                               "buffer": json.dumps(tiny.to_dict()).encode("utf-8")})
         expect(page.get_by_role("button", name="Remove tiny_4.json", exact=True)).to_be_visible()
         settled()
-        name = json.loads((ROOT / "data/synthetic/tiny_4.json").read_text(encoding="utf-8"))["name"]
-        run(name)
+        run(tiny.name)
         checks.append("JSON invalid clears old result; valid upload runs")
 
         select("source", "Kris — benchmark tác giả")
@@ -116,10 +126,11 @@ def main():
         mobile = browser.new_page(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True)
         mobile.on("pageerror", lambda error: errors.append(str(error)))
         mobile.goto(args.url)
-        expect(mobile.get_by_role("button", name="Chạy với cấu hình này", exact=True)).to_be_visible()
+        expect(mobile.get_by_role("button", name="Chạy với cấu hình này", exact=True)).to_be_visible(timeout=45000)
         mobile.screenshot(path=str(output / "after-mobile-empty.png"), full_page=True)
         mobile.get_by_role("button", name="Chạy với cấu hình này", exact=True).click()
         expect(mobile.get_by_test_id("stMetric")).to_have_count(3, timeout=45000)
+        mobile.get_by_role("tab", name="Tổng quan", exact=True).click()
         expect(mobile.get_by_text("Kết quả của phương án", exact=True)).to_be_visible()
         expect(mobile.get_by_test_id("stStatusWidget")).to_have_count(0, timeout=45000)
         mobile.screenshot(path=str(output / "after-mobile-results.png"), full_page=True)

@@ -5,8 +5,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from warehouse_opt.author_data import read_kris
-from warehouse_opt.models import InputError, write_json
+from src.author_data import read_kris
+from src.models import InputError, write_json
 
 
 def main():

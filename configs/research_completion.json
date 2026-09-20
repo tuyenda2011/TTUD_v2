@@ -1,0 +1,213 @@
+{
+  "version": 2,
+  "primary_weights": [
+    0.3333333333333333,
+    0.3333333333333333,
+    0.3333333333333333
+  ],
+  "selection_rule": "Lowest mean per-instance F over tuning seeds; ties by preset name. Never compare F across weight vectors.",
+  "generator": {
+    "pickers": 3,
+    "capacity": 30,
+    "aisles": 5,
+    "rows": 6,
+    "tightness": 0.15
+  },
+  "search": {
+    "seconds": 3,
+    "iterations": 100000,
+    "segment": 10
+  },
+  "presets": {
+    "standard": {
+      "temperature": 0.03,
+      "cooling": 0.995,
+      "candidate_limit": 24,
+      "removal_fraction": 0.15,
+      "max_removed": 6
+    },
+    "compact": {
+      "temperature": 0.02,
+      "cooling": 0.998,
+      "candidate_limit": 12,
+      "removal_fraction": 0.1,
+      "max_removed": 3
+    },
+    "exploratory": {
+      "temperature": 0.05,
+      "cooling": 0.999,
+      "candidate_limit": 16,
+      "removal_fraction": 0.2,
+      "max_removed": 4
+    }
+  },
+  "tuning": {
+    "sizes": [
+      10,
+      30,
+      100
+    ],
+    "instance_seeds": [
+      7301,
+      7302
+    ],
+    "search_seeds": [
+      31,
+      32
+    ]
+  },
+  "holdout": {
+    "sizes": [
+      10,
+      30,
+      100
+    ],
+    "instance_seeds": [
+      8401,
+      8402
+    ],
+    "search_seeds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
+  },
+  "methods": [
+    "B0",
+    "B2",
+    "B3",
+    "LNS",
+    "ALNS",
+    "VNS"
+  ],
+  "ablation": {
+    "sizes": [
+      30
+    ],
+    "instance_seeds": [
+      9501,
+      9502
+    ],
+    "search_seeds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "seconds": 1
+  },
+  "sensitivity": {
+    "sizes": [
+      10,
+      30,
+      100
+    ],
+    "instance_seeds": [
+      8601
+    ],
+    "search_seeds": [
+      11,
+      12,
+      13
+    ]
+  },
+  "weight_profiles": {
+    "equal": [
+      0.3333333333333333,
+      0.3333333333333333,
+      0.3333333333333333
+    ],
+    "distance": [
+      0.6,
+      0.2,
+      0.2
+    ],
+    "makespan": [
+      0.2,
+      0.6,
+      0.2
+    ],
+    "tardiness": [
+      0.2,
+      0.2,
+      0.6
+    ]
+  },
+  "exact": {
+    "seconds": 60,
+    "max_states": 2000000,
+    "cases": [
+      {
+        "n": 4,
+        "seed": 9701,
+        "pickers": 1,
+        "capacity": 10,
+        "tightness": 0.1
+      },
+      {
+        "n": 4,
+        "seed": 9702,
+        "pickers": 2,
+        "capacity": 15,
+        "tightness": 0.4
+      },
+      {
+        "n": 5,
+        "seed": 9703,
+        "pickers": 1,
+        "capacity": 12,
+        "tightness": 0.2
+      },
+      {
+        "n": 5,
+        "seed": 9704,
+        "pickers": 2,
+        "capacity": 20,
+        "tightness": 0.6
+      },
+      {
+        "n": 6,
+        "seed": 9705,
+        "pickers": 1,
+        "capacity": 15,
+        "tightness": 0.1
+      },
+      {
+        "n": 6,
+        "seed": 9706,
+        "pickers": 2,
+        "capacity": 20,
+        "tightness": 0.3
+      }
+    ]
+  },
+  "generator_by_seed": {
+    "7302": {
+      "cross_aisles": 1,
+      "tightness": 0.6
+    },
+    "8402": {
+      "cross_aisles": 1,
+      "tightness": 0.6
+    },
+    "9502": {
+      "cross_aisles": 1,
+      "tightness": 0.6
+    }
+  },
+  "development_decision": "results/completion_20260919/development/decision.json: retain baseline; incremental and delay_chain are experimental only.",
+  "budget_rationale": "Development pilot 7205 at 1/3/10 seconds: median 30/91.5/306 completed ALNS iterations; choose 3 seconds before holdout. Budget includes initialization."
+}

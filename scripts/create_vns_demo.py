@@ -4,10 +4,10 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from warehouse_opt.demo_snapshot import validate_snapshot
-from warehouse_opt.models import read_instance, write_json
-from warehouse_opt.search import SearchConfig
-from warehouse_opt.solver import solve
+from src.demo_snapshot import validate_snapshot
+from src.models import read_instance, write_json
+from src.search import SearchConfig
+from src.solver import solve
 
 
 if __name__ == "__main__":

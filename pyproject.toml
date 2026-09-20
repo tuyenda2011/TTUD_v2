@@ -14,10 +14,10 @@ demo = ["streamlit>=1.62,<2", "matplotlib>=3.7,<4", "pandas>=2,<4"]
 test = ["pytest>=7,<10"]
 
 [project.scripts]
-warehouse-opt = "warehouse_opt.cli:main"
+warehouse-opt = "src.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["warehouse_opt*"]
+include = ["src*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

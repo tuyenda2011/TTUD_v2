@@ -7,9 +7,9 @@ import zipfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from warehouse_opt.models import read_instance
-from warehouse_opt.solver import fingerprint
-from warehouse_opt.validator import validate_solution
+from src.models import read_instance
+from src.solver import fingerprint
+from src.validator import validate_solution
 
 
 def package(source, output):
