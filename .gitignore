@@ -111,3 +111,6 @@ data/raw/
 # Local test suite and working documentation are kept outside the public upload.
 /tests/
 /docs/**/*.md
+
+# Academic graduation/coursework report (kept local, not pushed to GitHub)
+/report/
