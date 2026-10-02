@@ -134,8 +134,9 @@ def build_simulation_data(instance, result):
                     "node": instance.depot,
                     "load": curr_load + d_load,
                     "batch_id": batch["id"],
-                    "info": f"Lấy hàng tại {instance.depot} (+{int(d_load)} SP)",
-                    "pick_qty": int(d_load),
+                    "info": f"Lấy {sum(depot_items.values())} sản phẩm tại {instance.depot}",
+                    "pick_qty": sum(depot_items.values()),
+                    "pick_load": d_load,
                     "pick_items": depot_items
                 })
                 curr_t += d_dur
@@ -209,8 +210,9 @@ def build_simulation_data(instance, result):
                         "node": stop_to,
                         "load": curr_load + stop_load,
                         "batch_id": batch["id"],
-                        "info": f"Lấy hàng tại {stop_to} (+{int(stop_load)} SP)",
-                        "pick_qty": int(stop_load),
+                        "info": f"Lấy {sum(picked_items.values())} sản phẩm tại {stop_to}",
+                        "pick_qty": sum(picked_items.values()),
+                        "pick_load": stop_load,
                         "pick_items": picked_items
                     })
                     curr_t += stop_dur
@@ -267,6 +269,7 @@ def build_simulation_data(instance, result):
         "pickers": pickers_data,
         "orders": orders_info,
         "capacity": op.capacity,
+        "capacity_unit": unit_label(instance, "capacity"),
         "speed": op.speed,
         "makespan": result["metrics"]["makespan"],
         "late_orders": result["metrics"]["late_orders"],
@@ -317,11 +320,14 @@ def render_simulation(instance, result, height=750):
     padding: 8px 14px;
     gap: 10px;
     flex-wrap: wrap;
+    min-width: 0;
   }}
   .btn-group {{
     display: flex;
     align-items: center;
     gap: 5px;
+    min-width: 0;
+    flex-wrap: wrap;
   }}
   button.sim-btn {{
     background: #334155;
@@ -406,6 +412,8 @@ def render_simulation(instance, result, height=750):
   /* Canvas Stage */
   .stage-wrap {{
     flex: 1;
+    min-width: 0;
+    min-height: 0;
     background: #182234;
     border: 1px solid #334155;
     border-radius: 10px;
@@ -427,10 +435,12 @@ def render_simulation(instance, result, height=750):
   /* Live HUD Cards */
   .hud-grid {{
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
     gap: 8px;
     max-height: 110px;
     overflow-y: auto;
+    min-width: 0;
+    flex-shrink: 0;
   }}
   .picker-card {{
     background: #1e293b;
@@ -442,6 +452,8 @@ def render_simulation(instance, result, height=750):
     gap: 4px;
     font-size: 11px;
     transition: border-color 0.2s;
+    min-width: 0;
+    overflow-wrap: anywhere;
   }}
   .picker-card.focused {{
     border-color: #38bdf8;
@@ -451,6 +463,8 @@ def render_simulation(instance, result, height=750):
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px 8px;
     font-weight: bold;
   }}
   .picker-dot {{
@@ -462,9 +476,8 @@ def render_simulation(instance, result, height=750):
   }}
   .picker-status {{
     color: #94a3b8;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }}
   .load-bar-wrap {{
     background: #334155;
@@ -534,7 +547,16 @@ def render_simulation(instance, result, height=750):
   let lastTimestamp = null;
   const timeUnit = simData.time_unit || "đơn vị thời gian";
   const timeScaleSeconds = Number.isFinite(simData.time_scale_seconds) ? simData.time_scale_seconds : null;
-  const makespan = Math.max(1.0, simData.makespan);
+  const capacityUnit = simData.capacity_unit || "đơn vị tải";
+  const makespan = Math.max(0.0, simData.makespan);
+
+  function formatNumber(value) {{
+    return Number(value.toPrecision(12)).toString();
+  }}
+
+  function formatLoad(value) {{
+    return `Đang chở ${{formatNumber(value)}} ${{capacityUnit}} · Sức chứa ${{formatNumber(simData.capacity)}} ${{capacityUnit}}`;
+  }}
 
   // Auto-scale base speed so the full simulation plays comfortably in ~30 seconds at 1x
   const baseRate = makespan / 30.0;
@@ -550,6 +572,10 @@ def render_simulation(instance, result, height=750):
   // Breadcrumbs history for smooth dynamic motion trail
   const pickerTrails = {{}};
   simData.pickers.forEach(p => {{ pickerTrails[p.id] = []; }});
+
+  function clearTrails() {{
+    simData.pickers.forEach(p => {{ pickerTrails[p.id].length = 0; }});
+  }}
 
   // DOM elements
   const canvas = document.getElementById("simCanvas");
@@ -585,22 +611,24 @@ def render_simulation(instance, result, height=750):
     card.innerHTML = `
       <div class="picker-card-header">
         <span><span class="picker-dot" style="background: ${{p.color}}"></span>${{p.name}}</span>
-        <span id="card-load-p${{p.id}}" style="color: #cbd5e1; font-weight: normal;">0/${{simData.capacity}}</span>
+        <span id="card-load-p${{p.id}}" style="color: #cbd5e1; font-weight: normal;"></span>
       </div>
       <div class="picker-status" id="card-status-p${{p.id}}">Sẵn sàng</div>
       <div class="load-bar-wrap">
         <div class="load-bar-fill" id="card-bar-p${{p.id}}" style="width: 0%; background: ${{p.color}}"></div>
       </div>
     `;
+    card.querySelector(`#card-load-p${{p.id}}`).textContent = formatLoad(0);
     hudGrid.appendChild(card);
   }});
 
   // Dynamic Canvas synchronization (called every frame)
   function syncCanvasSize() {{
-    const rect = stageWrap.getBoundingClientRect();
+    const width = Math.max(1, stageWrap.clientWidth);
+    const height = Math.max(1, stageWrap.clientHeight);
     const dpr = window.devicePixelRatio || 1;
-    const targetW = Math.round(Math.max(300, rect.width) * dpr);
-    const targetH = Math.round(Math.max(300, rect.height) * dpr);
+    const targetW = Math.round(width * dpr);
+    const targetH = Math.round(height * dpr);
     if (canvas.width !== targetW || canvas.height !== targetH) {{
       canvas.width = targetW;
       canvas.height = targetH;
@@ -612,11 +640,10 @@ def render_simulation(instance, result, height=750):
 
   // Coordinate mapping with Zoom & Pan
   function getTransform() {{
-    const rect = stageWrap.getBoundingClientRect();
-    const w = Math.max(300, rect.width);
-    const h = Math.max(300, rect.height);
+    const w = Math.max(1, stageWrap.clientWidth);
+    const h = Math.max(1, stageWrap.clientHeight);
     const b = simData.bounds;
-    const margin = 40;
+    const margin = Math.min(40, w / 4, h / 4);
 
     const spanX = Math.max(1, b.max_x - b.min_x);
     const spanY = Math.max(1, b.max_y - b.min_y);
@@ -642,8 +669,9 @@ def render_simulation(instance, result, height=750):
 
   // Event Listeners for Playback
   playBtn.addEventListener("click", () => {{
-    if (simTime >= makespan - 0.01) {{
+    if (simTime >= makespan) {{
       simTime = 0.0;
+      clearTrails();
       timelineSlider.value = 0;
       isPlaying = true;
       playBtn.textContent = "⏸ Tạm dừng";
@@ -657,6 +685,7 @@ def render_simulation(instance, result, height=750):
 
   resetBtn.addEventListener("click", () => {{
     simTime = 0.0;
+    clearTrails();
     timelineSlider.value = 0;
     isPlaying = false;
     playBtn.textContent = "▶ Bắt đầu";
@@ -667,6 +696,7 @@ def render_simulation(instance, result, height=750):
   timelineSlider.addEventListener("input", (e) => {{
     simTime = Math.min(makespan, Math.max(0, parseFloat(e.target.value)));
     if (makespan - simTime < 1e-9) simTime = makespan;
+    clearTrails();
     updateHUD();
   }});
 
@@ -683,7 +713,12 @@ def render_simulation(instance, result, height=750):
     document.querySelectorAll(".picker-card").forEach(c => c.classList.remove("focused"));
     if (focusPicker !== "all") {{
       const focusedCard = document.getElementById(`card-p${{focusPicker}}`);
-      if (focusedCard) focusedCard.classList.add("focused");
+      if (focusedCard) {{
+        focusedCard.classList.add("focused");
+        focusedCard.scrollIntoView({{ block: "nearest", inline: "nearest" }});
+      }}
+    }} else {{
+      hudGrid.scrollTop = 0;
     }}
   }});
 
@@ -724,23 +759,23 @@ def render_simulation(instance, result, height=750):
       return {{ x: depot.x, y: depot.y, state: "idle", load: 0, info: "Nghỉ tại Depot", pick_qty: 0, heading: 0, setup_pct: 0 }};
     }}
 
+    // After last batch
+    const lastSeg = segments[segments.length - 1];
+    if (t >= lastSeg.t_end) {{
+      return {{ x: lastSeg.x2, y: lastSeg.y2, state: "idle", load: 0, info: "Hoàn tất nhiệm vụ", pick_qty: 0, heading: 0, setup_pct: 100 }};
+    }}
+
     // Before first batch
     if (t <= segments[0].t_start) {{
       return {{ x: segments[0].x1, y: segments[0].y1, state: "idle", load: 0, info: "Sẵn sàng tại Depot", pick_qty: 0, heading: 0, setup_pct: 0 }};
-    }}
-
-    // After last batch
-    const lastSeg = segments[segments.length - 1];
-    if (t >= lastSeg.t_end - 1e-9) {{
-      return {{ x: lastSeg.x2, y: lastSeg.y2, state: "idle", load: 0, info: "Hoàn tất nhiệm vụ", pick_qty: 0, heading: 0, setup_pct: 100 }};
     }}
 
     // Find active segment
     for (let i = 0; i < segments.length; i++) {{
       const seg = segments[i];
       if (t >= seg.t_start && t <= seg.t_end) {{
-        const span = Math.max(0.0001, seg.t_end - seg.t_start);
-        const alpha = Math.min(1, Math.max(0, (t - seg.t_start) / span));
+        const span = seg.t_end - seg.t_start;
+        const alpha = span > 0 ? Math.min(1, Math.max(0, (t - seg.t_start) / span)) : 1;
         const curX = seg.x1 + alpha * (seg.x2 - seg.x1);
         const curY = seg.y1 + alpha * (seg.y2 - seg.y1);
         const heading = Math.atan2(seg.y2 - seg.y1, seg.x2 - seg.x1);
@@ -776,30 +811,25 @@ def render_simulation(instance, result, height=750):
   }}
 
   // Unified clock formatting
-  function formatClock(val, hasHours) {{
+  function formatClock(val) {{
     if (timeScaleSeconds === null) {{
-      return `${{Math.max(0, val).toFixed(2)}} ${{timeUnit}}`;
+      return `${{formatNumber(Math.max(0, val))}} ${{timeUnit}}`;
     }}
     const totalSec = Math.max(0, Math.round(val * timeScaleSeconds));
     const h = Math.floor(totalSec / 3600);
     const m = Math.floor((totalSec % 3600) / 60);
     const s = totalSec % 60;
-    if (hasHours) {{
-      return `${{String(h).padStart(2, '0')}}:${{String(m).padStart(2, '0')}}:${{String(s).padStart(2, '0')}}`;
+    if (h > 0) {{
+      return `${{h}} giờ ${{String(m).padStart(2, '0')}} phút ${{String(s).padStart(2, '0')}} giây`;
     }}
-    return `${{String(m).padStart(2, '0')}}:${{String(s).padStart(2, '0')}}`;
+    return `${{m}} phút ${{String(s).padStart(2, '0')}} giây`;
   }}
 
   function formatTimeBadge(curVal, maxVal) {{
     if (timeScaleSeconds === null) {{
-      return `⏱️ ${{formatClock(curVal, false)}} / ${{formatClock(maxVal, false)}}`;
+      return `⏱️ ${{formatNumber(curVal)}} / ${{formatNumber(maxVal)}} ${{timeUnit}}`;
     }}
-    const maxSec = maxVal * timeScaleSeconds;
-    const hasHours = maxSec >= 3600;
-    const curClock = formatClock(curVal, hasHours);
-    const maxClock = formatClock(maxVal, hasHours);
-
-    return `⏱️ ${{curClock}} / ${{maxClock}} (${{curVal.toFixed(1)}} / ${{maxVal.toFixed(1)}} ${{timeUnit}})`;
+    return `⏱️ ${{formatClock(curVal)}} / ${{formatClock(maxVal)}}`;
   }}
 
   // Update HUD
@@ -814,7 +844,7 @@ def render_simulation(instance, result, height=750):
       const barEl = document.getElementById(`card-bar-p${{p.id}}`);
 
       if (statusEl) statusEl.textContent = st.info;
-      if (loadEl) loadEl.textContent = `${{Math.round(st.load)}}/${{simData.capacity}}`;
+      if (loadEl) loadEl.textContent = formatLoad(st.load);
       if (barEl) {{
         const pct = Math.min(100, (st.load / simData.capacity) * 100);
         barEl.style.width = `${{pct}}%`;
@@ -923,26 +953,67 @@ def render_simulation(instance, result, height=750):
     const aisleSpan = 8;
     const aisleScreenDist = aisleSpan * T.scale;
     const pickerRadius = Math.max(6, Math.min(12, Math.max(7, aisleScreenDist * 0.75)));
-    const colOffset = Math.min(pickerRadius + 1, 10);
-
     const pickerStates = simData.pickers.map(p => ({{
       picker: p,
       state: getPickerState(p, simTime)
     }}));
 
-    // Proximity offset in SCREEN pixels
-    for (let i = 0; i < pickerStates.length; i++) {{
-      for (let j = i + 1; j < pickerStates.length; j++) {{
-        const p1 = pickerStates[i].state;
-        const p2 = pickerStates[j].state;
-        const sx1 = T.toScreenX(p1.x);
-        const sy1 = T.toScreenY(p1.y);
-        const sx2 = T.toScreenX(p2.x);
-        const sy2 = T.toScreenY(p2.y);
-        if (Math.hypot(sx1 - sx2, sy1 - sy2) < pickerRadius * 2.2) {{
-          p1.screenOffsetX = -colOffset;
-          p2.screenOffsetX = colOffset;
+    // Keep co-located markers distinct; a connector preserves their true position.
+    const placed = [{{ x: dsx, y: dsy, radius: depotSize / 2 }}];
+    const spacing = pickerRadius * 2 + 8;
+    const inset = pickerRadius + 3;
+    pickerStates.forEach(item => {{
+      const anchorX = T.toScreenX(item.state.x);
+      const anchorY = T.toScreenY(item.state.y);
+      let marker = null;
+      for (let ring = 0; ring <= pickerStates.length && !marker; ring++) {{
+        const count = ring === 0 ? 1 : ring * 6;
+        for (let slot = 0; slot < count; slot++) {{
+          const angle = slot * Math.PI * 2 / count;
+          const x = Math.max(inset, Math.min(T.w - inset, anchorX + Math.cos(angle) * spacing * ring));
+          const y = Math.max(inset, Math.min(T.h - inset, anchorY + Math.sin(angle) * spacing * ring));
+          if (placed.every(other => Math.hypot(x - other.x, y - other.y) >= pickerRadius + other.radius + 4)) {{
+            marker = {{ x, y, radius: pickerRadius }};
+            break;
+          }}
         }}
+      }}
+      item.marker = marker || {{ x: anchorX, y: anchorY, radius: pickerRadius }};
+      placed.push(item.marker);
+    }});
+
+    const statusBadges = [];
+    function drawStatusBadge(text, item, preferAbove = false) {{
+      const marker = item.marker;
+      ctx.font = "bold 9px sans-serif";
+      const w = Math.max(52, ctx.measureText(text).width + 12);
+      const h = 16;
+      const above = {{ x: marker.x - w / 2, y: marker.y - pickerRadius - h - 3 }};
+      const right = {{ x: marker.x + pickerRadius + 3, y: marker.y - h / 2 }};
+      const candidates = [preferAbove ? above : right, preferAbove ? right : above,
+        {{ x: marker.x - pickerRadius - w - 3, y: marker.y - h / 2 }},
+        {{ x: marker.x - w / 2, y: marker.y + pickerRadius + 3 }}];
+      for (const rect of candidates) {{
+        if (rect.x < 3 || rect.y < 3 || rect.x + w > T.w - 3 || rect.y + h > T.h - 3) continue;
+        const markersToAvoid = focusPicker === "all" ? placed.filter(other => other !== marker) : [placed[0]];
+        const coversMarker = markersToAvoid.some(other => {{
+          const dx = other.x - Math.max(rect.x, Math.min(rect.x + w, other.x));
+          const dy = other.y - Math.max(rect.y, Math.min(rect.y + h, other.y));
+          return Math.hypot(dx, dy) < other.radius + 3;
+        }});
+        const coversBadge = statusBadges.some(other => rect.x < other.x + other.w + 3
+          && rect.x + w + 3 > other.x && rect.y < other.y + other.h + 3 && rect.y + h + 3 > other.y);
+        if (coversMarker || coversBadge) continue;
+        ctx.fillStyle = item.picker.color;
+        ctx.beginPath();
+        ctx.roundRect(rect.x, rect.y, w, h, 3);
+        ctx.fill();
+        ctx.fillStyle = "#ffffff";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, rect.x + w / 2, rect.y + h / 2);
+        statusBadges.push({{ ...rect, w, h }});
+        return;
       }}
     }}
 
@@ -952,13 +1023,28 @@ def render_simulation(instance, result, height=750):
       const isFocused = focusPicker === "all" || focusPicker == p.id;
       const alpha = isFocused ? 1.0 : 0.22;
 
-      const sx = T.toScreenX(st.x) + (st.screenOffsetX || 0);
-      const sy = T.toScreenY(st.y);
+      const sx = item.marker.x;
+      const sy = item.marker.y;
+      const anchorX = T.toScreenX(st.x);
+      const anchorY = T.toScreenY(st.y);
+      if (isFocused && Math.hypot(sx - anchorX, sy - anchorY) > 1) {{
+        ctx.beginPath();
+        ctx.moveTo(anchorX, anchorY);
+        ctx.lineTo(sx, sy);
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = 0.45;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }}
 
       // Breadcrumb history trail
       const trail = pickerTrails[p.id];
       if (st.state === "traveling") {{
-        trail.push({{ x: sx, y: sy, t: timestamp }});
+        const previous = trail[trail.length - 1];
+        if (!previous || previous.x !== st.x || previous.y !== st.y) {{
+          trail.push({{ x: st.x, y: st.y, t: timestamp }});
+        }}
         if (trail.length > 12) trail.shift();
       }} else {{
         if (trail.length > 0 && Math.random() < 0.2) trail.shift();
@@ -967,9 +1053,9 @@ def render_simulation(instance, result, height=750):
       // Draw faint motion trail
       if (trail.length > 1 && isFocused) {{
         ctx.beginPath();
-        ctx.moveTo(trail[0].x, trail[0].y);
+        ctx.moveTo(T.toScreenX(trail[0].x), T.toScreenY(trail[0].y));
         for (let t_idx = 1; t_idx < trail.length; t_idx++) {{
-          ctx.lineTo(trail[t_idx].x, trail[t_idx].y);
+          ctx.lineTo(T.toScreenX(trail[t_idx].x), T.toScreenY(trail[t_idx].y));
         }}
         ctx.strokeStyle = p.color;
         ctx.lineWidth = Math.max(1.5, pickerRadius * 0.4);
@@ -991,15 +1077,7 @@ def render_simulation(instance, result, height=750):
         ctx.stroke();
         ctx.restore();
 
-        // Setup badge above cart
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.roundRect(sx - 28, sy - pickerRadius - 16, 56, 14, 3);
-        ctx.fill();
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 8px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText(`Soạn ${{st.setup_pct}}%`, sx, sy - pickerRadius - 6);
+        drawStatusBadge(`Soạn ${{st.setup_pct}}%`, item, true);
       }}
 
       // Picking Ripple Pulse Effect
@@ -1014,15 +1092,7 @@ def render_simulation(instance, result, height=750):
         ctx.stroke();
         ctx.globalAlpha = 1.0;
 
-        // Picking badge
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.roundRect(sx + pickerRadius + 3, sy - 14, 52, 16, 4);
-        ctx.fill();
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 9px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText(`+${{st.pick_qty || 1}} SP`, sx + pickerRadius + 29, sy - 3);
+        drawStatusBadge(`+${{st.pick_qty || 1}} SP`, item);
       }}
 
       // Unloading Effect
@@ -1071,9 +1141,10 @@ def render_simulation(instance, result, height=750):
         const barW = Math.max(16, pickerRadius * 2.2);
         const barH = 3.5;
         ctx.fillStyle = "#0f172a";
-        ctx.fillRect(sx - barW / 2, sy - pickerRadius - 6, barW, barH);
+        const barY = sy - pickerRadius - 6 >= 3 ? sy - pickerRadius - 6 : sy + pickerRadius + 3;
+        ctx.fillRect(sx - barW / 2, barY, barW, barH);
         ctx.fillStyle = "#38bdf8";
-        ctx.fillRect(sx - barW / 2, sy - pickerRadius - 6, barW * loadPct, barH);
+        ctx.fillRect(sx - barW / 2, barY, barW * loadPct, barH);
       }}
 
       ctx.globalAlpha = 1.0;

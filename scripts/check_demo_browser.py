@@ -33,11 +33,15 @@ def main():
         page.screenshot(path=str(output / "after-desktop-empty.png"), full_page=True)
 
         def select(key, value):
+            settled()
             control = page.locator(f".st-key-{key}").get_by_role("combobox")
             control.scroll_into_view_if_needed()
-            control.focus()
+            control.fill(value)
+            expect(page.get_by_role("option", name=value, exact=True)).to_be_visible(timeout=15000)
             control.press("ArrowDown")
-            page.get_by_role("option", name=value, exact=True).click()
+            control.press("Enter")
+            expect(control).to_have_value(value)
+            settled()
 
         def settled():
             expect(page.get_by_test_id("stStatusWidget")).to_have_count(0, timeout=45000)
@@ -68,16 +72,54 @@ def main():
 
         page.get_by_text("Tải kết quả", exact=True).click()
         with page.expect_download() as download_info:
-            page.get_by_role("button", name="Tải toàn bộ lần chạy", exact=True).click()
+            page.get_by_role("button", name="Tải toàn bộ lần chạy (gốc)", exact=True).click()
         snapshot_path = output / "downloaded-snapshot.json"
         download_info.value.save_as(snapshot_path)
         snapshot = validate_snapshot(json.loads(snapshot_path.read_text(encoding="utf-8")))
+        assert set(snapshot["results"]) == {"B0", "ALNS"}
         with page.expect_download() as download_info:
-            page.get_by_role("button", name="Tải nghiệm JSON", exact=True).click()
+            page.get_by_role("button", name="Tải nghiệm JSON (gốc)", exact=True).click()
         result_path = output / "downloaded-solution.json"
         download_info.value.save_as(result_path)
         assert not validate_solution(Instance.from_dict(snapshot["instance"]), json.loads(result_path.read_text(encoding="utf-8")))
         checks.append("download snapshot and solution; independent validation")
+
+        page.get_by_text("Nâng cao", exact=True).click()
+        select("objective_profile", "Giảm tổng độ trễ")
+        expect(page.get_by_text("Đang xem kết quả của cấu hình đã lưu.", exact=False)).to_be_visible()
+        page.locator(".st-key-run").get_by_role("button").click()
+        expect(page.get_by_text("Đang xem kết quả của cấu hình đã lưu.", exact=False)).to_have_count(0, timeout=45000)
+        settled()
+        page.get_by_role("tab", name="Tổng quan", exact=True).click()
+        page.get_by_text("Phân tích thuật toán", exact=True).click()
+        expect(page.get_by_text("Trọng số quãng đường / hoàn tất / tổng trễ: 0.200 / 0.200 / 0.600.", exact=True)).to_be_visible()
+        page.get_by_text("Tải kết quả", exact=True).click()
+        with page.expect_download() as download_info:
+            page.get_by_role("button", name="Tải toàn bộ lần chạy (gốc)", exact=True).click()
+        weighted_path = output / "weighted-snapshot.json"
+        download_info.value.save_as(weighted_path)
+        weighted = validate_snapshot(json.loads(weighted_path.read_text(encoding="utf-8")))
+        assert all(tuple(r["objective_config"]["weights"]) == (.2, .2, .6) for r in weighted["results"].values())
+        settled()
+        page.get_by_text("Trọng số quãng đường / hoàn tất / tổng trễ: 0.200 / 0.200 / 0.600.", exact=True).scroll_into_view_if_needed()
+        page.screenshot(path=str(output / "after-weighted-results.png"), full_page=True)
+        checks.append("objective preference marks draft stale; rerun and export keep selected weights")
+
+        page.locator(".st-key-comparison").locator("label").click()
+        expect(page.locator(".st-key-comparison").get_by_role("checkbox")).to_be_checked()
+        expect(page.get_by_text("Đang xem kết quả của cấu hình đã lưu.", exact=False)).to_be_visible()
+        run("synthetic-n10-seed42")
+        page.get_by_text("Tải kết quả", exact=True).click()
+        with page.expect_download() as download_info:
+            page.get_by_role("button", name="Tải toàn bộ lần chạy (gốc)", exact=True).click()
+        comparison_path = output / "comparison-snapshot.json"
+        download_info.value.save_as(comparison_path)
+        comparison = validate_snapshot(json.loads(comparison_path.read_text(encoding="utf-8")))
+        assert set(comparison["results"]) == {"B0", "B2", "LNS", "ALNS", "VNS"}
+        assert all(tuple(r["objective_config"]["weights"]) == (.2, .2, .6)
+                   for r in comparison["results"].values())
+        page.screenshot(path=str(output / "after-comparison-results.png"), full_page=True)
+        checks.append("comparison runs all five algorithms with selected objective weights")
 
         page.locator(".st-key-orders").get_by_role("spinbutton").fill("30")
         page.locator(".st-key-orders").get_by_role("spinbutton").press("Enter")
@@ -89,6 +131,12 @@ def main():
         page.screenshot(path=str(output / "after-route-30.png"), full_page=True)
         page.locator('img:visible').first.screenshot(path=str(output / "route-30.png"))
         checks.append("changed draft marked stale; 30-order rerun")
+
+        page.locator(".st-key-reset_map_defaults").get_by_role("button").click()
+        expect(page.locator(".st-key-orders").get_by_role("spinbutton")).to_have_value("10")
+        expect(page.get_by_text("Đang xem kết quả của cấu hình đã lưu.", exact=False)).to_be_visible()
+        assert page.get_by_test_id("stException").count() == 0
+        checks.append("reset map defaults after changing inputs preserves old result and marks it stale")
 
         select("scenario", "🟡 Kho 2 khối có lối đi giữa (Double-Block)")
         run("double_block-synthetic-n30-seed42")

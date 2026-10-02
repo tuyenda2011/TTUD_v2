@@ -9,8 +9,9 @@ from demo.simulation import render_simulation
 from demo.state import KRIS, SYNTHETIC, UPLOAD, improvement, upload_digest
 from src.generator import MAP_SCENARIOS
 from src.models import Instance
+from src.objectives import WEIGHT_PROFILES
 from src.plots import gantt_figure, warehouse_figure
-from src.units import display_snapshot, time_scale_seconds, unit_label
+from src.units import KRIS_DISPLAY_CONVENTION, display_snapshot, format_duration, time_scale_seconds, unit_label
 
 
 def style():
@@ -21,6 +22,9 @@ def style():
     h3 {font-size:1.1rem !important;}
     [data-testid="stMetric"] {padding:12px 0;}
     [data-testid="stMetricValue"] {font-size:2rem;}
+    [data-testid="stMetricValue"], [data-testid="stMetricValue"] * {
+      white-space:normal !important;overflow-wrap:anywhere;text-overflow:clip !important;height:auto;
+    }
     button:focus-visible, a:focus-visible {outline:3px solid #176B5B !important;outline-offset:3px;}
     @media(max-width:640px) {
       .stMainBlockContainer {padding:3.5rem 1rem 2rem;}
@@ -28,6 +32,13 @@ def style():
       [data-testid="stMetric"] {padding:4px 0;}
     }
     </style>""", unsafe_allow_html=True)
+
+
+def reset_map_defaults():
+    scenario = MAP_SCENARIOS[st.session_state.get("scenario", "single_block")]
+    for key, value in (("orders", scenario["n"]), ("pickers", scenario["pickers"]),
+                       ("capacity", int(scenario["capacity"])), ("tightness", scenario["tightness"])):
+        st.session_state[key] = value
 
 
 def sidebar(root, on_run):
@@ -67,17 +78,15 @@ def sidebar(root, on_run):
 
             st.caption(f"ℹ️ {scen['description']}")
 
-            draft["orders"] = st.number_input("Số đơn", 1, 300, st.session_state.get("orders", scen["n"]), key="orders")
-            draft["pickers"] = st.number_input("Số nhân viên", 1, 12, st.session_state.get("pickers", scen["pickers"]), key="pickers")
-            draft["capacity"] = st.number_input("Sức chứa mỗi chuyến", 1, 500, int(st.session_state.get("capacity", scen["capacity"])), key="capacity")
+            for key, value in (("orders", int(scen["n"])), ("pickers", int(scen["pickers"])),
+                               ("capacity", int(scen["capacity"])), ("tightness", float(scen["tightness"]))):
+                st.session_state.setdefault(key, value)
+            draft["orders"] = st.number_input("Số đơn", 1, 300, key="orders")
+            draft["pickers"] = st.number_input("Số nhân viên", 1, 12, key="pickers")
+            draft["capacity"] = st.number_input("Sức chứa mỗi chuyến (sản phẩm)", 1, 500, key="capacity")
 
-            if st.button("↺ Đặt lại thông số chuẩn", key="reset_map_defaults",
-                         help="Khôi phục số đơn, nhân viên, sức chứa và độ nới hạn theo mặc định của map đang chọn"):
-                st.session_state["orders"] = int(scen["n"])
-                st.session_state["pickers"] = int(scen["pickers"])
-                st.session_state["capacity"] = int(scen["capacity"])
-                st.session_state["tightness"] = float(scen["tightness"])
-                st.rerun()
+            st.button("↺ Đặt lại thông số chuẩn", key="reset_map_defaults", on_click=reset_map_defaults,
+                      help="Khôi phục số đơn, nhân viên, sức chứa và độ nới hạn theo mặc định của map đang chọn")
         elif source == KRIS:
             try:
                 catalog = json.loads((root / "data/processed/kris_small/catalog.json").read_text(encoding="utf-8"))
@@ -97,10 +106,17 @@ def sidebar(root, on_run):
 
         with st.expander("Nâng cao", expanded=False):
             if source == SYNTHETIC:
-                draft["tightness"] = st.slider("Độ nới hạn", .02, 1., st.session_state.get("tightness", scen["tightness"]), .01, key="tightness",
+                draft["tightness"] = st.slider("Độ nới hạn", .02, 1., step=.01, key="tightness",
                                                help="Giá trị nhỏ làm thời hạn giao đơn gấp hơn.")
             draft["seed"] = st.number_input("Seed", min_value=0, value=42, key="seed")
             draft["seconds"] = st.slider("Ngân sách mỗi thuật toán (giây)", .2, 10., 2., .2, key="budget")
+            profile_labels = {"balanced": "Cân bằng", "distance": "Giảm quãng đường",
+                              "makespan": "Hoàn tất sớm", "tardiness": "Giảm tổng độ trễ"}
+            draft["objective_profile"] = st.selectbox(
+                "Ưu tiên tối ưu", list(WEIGHT_PROFILES), key="objective_profile",
+                format_func=profile_labels.get,
+                help="Tăng trọng số của tiêu chí được chọn; vẫn cho phép trễ hạn.")
+            st.caption("Giảm tổng độ trễ vẫn có thể tăng số đơn trễ. Đổi ưu tiên cần chạy lại.")
             draft["comparison"] = st.checkbox("So sánh 5 thuật toán: B0, B2, LNS, ALNS, VNS", value=False, key="comparison")
             draft["vns"] = draft["comparison"]
             st.caption("Mặc định B0 và ALNS. Ngân sách tính riêng cho từng thuật toán tìm kiếm.")
@@ -112,7 +128,8 @@ def sidebar(root, on_run):
 
 
 def instance_summary(instance):
-    st.write(f"**{len(instance.orders)} đơn** · {instance.operations.pickers} nhân viên · "
+    quantity = sum(sum(order.items.values()) for order in instance.orders)
+    st.write(f"**{len(instance.orders)} đơn · {quantity} sản phẩm** · {instance.operations.pickers} nhân viên · "
              f"Sức chứa {instance.operations.capacity:g} {unit_label(instance, 'capacity')} mỗi chuyến")
 
 
@@ -153,6 +170,9 @@ def route_view(instance, result):
 def research_view(instance, results, result):
     with st.expander("Phân tích thuật toán", expanded=False):
         st.write(f"**Điểm tổng hợp F: {result['metrics']['objective']:.4f}** · Thấp hơn là tốt hơn trên cùng dữ liệu và trọng số.")
+        weights = result["objective_config"]["weights"]
+        st.caption(f"Trọng số quãng đường / hoàn tất / tổng trễ: "
+                   f"{weights[0]:.3f} / {weights[1]:.3f} / {weights[2]:.3f}.")
         columns = {"method": "Thuật toán", "objective": "Điểm F", "distance": f"Quãng đường ({unit_label(instance, 'distance')})",
                    "makespan": f"Hoàn tất ({unit_label(instance, 'time')})",
                    "tardiness": f"Tổng độ trễ ({unit_label(instance, 'time')})", "late_orders": "Đơn trễ",
@@ -178,12 +198,13 @@ def research_view(instance, results, result):
 
 def results_view(snapshot):
     raw_snapshot = snapshot
-    snapshot = display_snapshot(snapshot)
+    snapshot = display_snapshot(snapshot, KRIS_DISPLAY_CONVENTION)
     instance = Instance.from_dict(snapshot["instance"])
     results = snapshot["results"]
-    if snapshot is not raw_snapshot:
-        st.caption("Kris hiển thị theo quy ước dự án: 10 đơn vị gốc = 1 m; "
-                   "30 đơn vị thời gian gốc = 1 giây. Hệ số chưa được tác giả xác nhận.")
+    if instance.metadata.get("display_conversion"):
+        st.caption("Quy ước demo Kris: 10 đơn vị khoảng cách = 1 m; 30 đơn vị thời gian = 1 giây.")
+    elif instance.metadata.get("source_kind") == "author_benchmark":
+        st.caption("Dữ liệu tác giả giữ đơn vị nguồn. Chưa có hệ số được xác nhận để đổi sang mét hoặc giây/phút.")
     st.caption(f"Lần chạy: {instance.name} · Seed {snapshot.get('seed', 'không lưu')} · "
                f"{'Bản lưu' if snapshot.get('saved_playback') else 'Kết quả trực tiếp'}")
     instance_summary(instance)
@@ -206,23 +227,19 @@ def results_view(snapshot):
     col1, col2, col3 = st.columns(3)
     col1.metric("Đơn trễ", f"{metrics['late_orders']} đơn")
 
+    time_display = format_duration(metrics["makespan"], instance)
     if time_scale is not None:
-        total_sec = round(metrics["makespan"] * time_scale)
-        hours = int(total_sec // 3600)
-        mins = int((total_sec % 3600) // 60)
-        time_display = f"{hours} giờ {mins:02d} phút" if hours > 0 else f"{mins} phút {int(total_sec % 60):02d} giây"
         col2.metric("Thời gian hoàn tất", time_display,
                     help=f"Quy đổi theo {time_scale:g} giây cho mỗi đơn vị thời gian đã khai báo")
         col3.metric("Quãng đường", f"{metrics['distance']:,.1f} {distance_unit}")
     else:
-        mins_val = metrics["makespan"]
-        col2.metric("Thời gian hoàn tất", f"{mins_val:,.1f} {time_unit}",
+        col2.metric("Thời gian hoàn tất", time_display,
                     delta="Không quy đổi đơn vị nguồn", delta_color="off")
         col3.metric("Quãng đường", f"{metrics['distance']:,.1f} {distance_unit}")
     sim_tab, overview, routes, details = st.tabs(["🎮 Mô phỏng động", "Tổng quan", "Tuyến & lịch", "Chi tiết"])
     with sim_tab:
         st.subheader("Mô phỏng phát lại nghiệm kho")
-        st.caption("Phát lại timeline tĩnh trên trình duyệt · Hỗ trợ nhiều nhân viên · Điều khiển Play/Pause/Tua/Tốc độ")
+        st.caption("Mỗi đơn có thể gồm nhiều sản phẩm. Tải xe là lượng đang chở; sức chứa là giới hạn mỗi chuyến.")
         render_simulation(instance, result)
     with overview:
         st.subheader("Kết quả của phương án")
@@ -249,7 +266,7 @@ def results_view(snapshot):
             "id": "Đơn", "batch": "Chuyến", "picker": "Nhân viên", "due": f"Hạn ({time_unit})",
             "completion": f"Hoàn tất ({time_unit})", "tardiness": f"Trễ ({time_unit})"}), hide_index=True, width="stretch")
         st.subheader("Chuyến lấy hàng")
-        cols = {"id": "Chuyến", "picker": "Nhân viên", "orders": "Các đơn", "load": "Tải",
+        cols = {"id": "Chuyến", "picker": "Nhân viên", "orders": "Các đơn", "load": f"Tải ({unit_label(instance, 'capacity')})",
                 "distance": f"Quãng đường ({distance_unit})", "start": f"Bắt đầu ({time_unit})", "end": f"Kết thúc ({time_unit})"}
         st.dataframe(pd.DataFrame([{k: b[k] for k in cols} for b in result["batches"]]).rename(columns=cols),
                      hide_index=True, width="stretch")

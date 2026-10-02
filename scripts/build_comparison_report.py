@@ -29,6 +29,7 @@ if str(ROOT) not in sys.path:
 from src.comparison import paired_comparisons
 from src.models import InputError, read_instance
 from src.solver import fingerprint
+from src.search import SearchConfig
 from src.validator import validate_solution
 
 METRICS = ("objective", "distance", "makespan", "tardiness", "late_orders", "on_time_rate", "total_seconds")
@@ -141,6 +142,9 @@ def verify_benchmark(root: Path):
     config = read_json(root / "config.json")
     manifest = read_json(root / "manifest.json")
     preregistered = read_json(root / "preregistered.json")
+    _assert_same(manifest.get("config"), config, "manifest.json configuration")
+    _assert_same(preregistered.get("config"), config, "preregistered.json configuration")
+    _assert_same(manifest.get("source_sha256"), preregistered.get("source_sha256"), "source hashes")
     records = manifest.get("runs")
     if not isinstance(records, list) or not records:
         raise InputError("manifest.json has no runs")
@@ -183,6 +187,23 @@ def verify_benchmark(root: Path):
     actual_files = {path.resolve() for path in (root / "raw").glob("*.json")}
     if actual_files != referenced_files:
         raise InputError("raw/ contents do not match manifest.json")
+    seeds = config.get("search_seeds", [7])
+    methods = config.get("methods", ["B0", "B2", "LNS", "ALNS", "VNS"])
+    expected_identities = {(name, method, seed) for name in instances for method in methods
+                           for seed in (seeds if method in STOCHASTIC else seeds[:1])}
+    if identities != expected_identities:
+        raise InputError("Missing or unexpected benchmark run identities")
+    baselines = {r["instance"]: r for r in results if r["method"] == "B0"}
+    for result in results:
+        instance = instances[result["instance"]]
+        baseline = baselines[result["instance"]]["metrics"]
+        completion = max(baseline["makespan"], 1.)
+        expected_objective = {"distance_ref": max(baseline["distance"], 1.),
+                              "completion_ref": completion, "tardiness_ref": len(instance.orders) * completion,
+                              "weights": config.get("weights", [1/3, 1/3, 1/3])}
+        _assert_same(result["objective_config"], expected_objective, "objective configuration")
+        search_config = json.loads(json.dumps(SearchConfig(**config.get("search", {})).__dict__))
+        _assert_same(result["search"]["config"], search_config, "search configuration")
 
     with (root / "runs.csv").open(encoding="utf-8", newline="") as stream:
         csv_rows = list(csv.DictReader(stream))
@@ -216,6 +237,9 @@ def verify_benchmark(root: Path):
 
     if preregistered.get("instances") and set(preregistered["instances"]) != set(instances):
         raise InputError("preregistered.json instance set mismatch")
+    for name, instance in instances.items():
+        if preregistered.get("instances", {}).get(name) != fingerprint(instance):
+            raise InputError("Preregistered instance fingerprint mismatch")
     return {
         "root": root,
         "config": config,

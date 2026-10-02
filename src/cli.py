@@ -6,6 +6,7 @@ from .benchmark import benchmark
 from .exact import solve_exact
 from .generator import MAP_SCENARIOS, generate, generate_scenario
 from .models import InputError, read_instance, write_json
+from .objectives import WEIGHT_PROFILES, profile_weights
 from .search import SearchConfig
 from .solver import METHODS, solve
 from .validator import validate_solution
@@ -32,7 +33,9 @@ def main(argv=None):
     run.add_argument("--seconds", type=float, default=3.)
     run.add_argument("--iterations", type=int, default=200)
     run.add_argument("--candidate-limit", type=int, default=24)
-    run.add_argument("--weights", type=float, nargs=3, default=[1/3, 1/3, 1/3], metavar=("DISTANCE", "MAKESPAN", "TARDINESS"))
+    objective = run.add_mutually_exclusive_group()
+    objective.add_argument("--weights", type=float, nargs=3, metavar=("DISTANCE", "MAKESPAN", "TARDINESS"))
+    objective.add_argument("--profile", choices=list(WEIGHT_PROFILES), default="balanced")
     run.add_argument("--output", required=True)
     validate = sub.add_parser("validate", help="Independently validate exported solution")
     validate.add_argument("instance")
@@ -41,6 +44,9 @@ def main(argv=None):
     exact.add_argument("instance")
     exact.add_argument("--seconds", type=float, default=30.)
     exact.add_argument("--max-states", type=int, default=200000)
+    exact_objective = exact.add_mutually_exclusive_group()
+    exact_objective.add_argument("--weights", type=float, nargs=3, metavar=("DISTANCE", "MAKESPAN", "TARDINESS"))
+    exact_objective.add_argument("--profile", choices=list(WEIGHT_PROFILES), default="balanced")
     exact.add_argument("--output", required=True)
     bench = sub.add_parser("benchmark", help="Run config JSON, save raw and aggregate results")
     bench.add_argument("--config", default="configs/smoke.json")
@@ -75,7 +81,8 @@ def main(argv=None):
             print(f"Generated {instance.name}: {len(instance.orders)} orders -> {args.output}")
         elif args.command == "solve":
             config = SearchConfig(seconds=args.seconds, iterations=args.iterations, candidate_limit=args.candidate_limit)
-            result = solve(read_instance(args.instance), args.method, args.seed, config, args.weights)
+            weights = args.weights if args.weights is not None else profile_weights(args.profile)
+            result = solve(read_instance(args.instance), args.method, args.seed, config, weights)
             write_json(args.output, result)
             print(json.dumps(result["metrics"], indent=2))
             print(f"Validated solution -> {args.output}")
@@ -86,7 +93,8 @@ def main(argv=None):
                 raise InputError("; ".join(errors))
             print("VALID: orders, capacity, physical paths, timing and metrics")
         elif args.command == "exact":
-            result = solve_exact(read_instance(args.instance), args.seconds, args.max_states)
+            weights = args.weights if args.weights is not None else profile_weights(args.profile)
+            result = solve_exact(read_instance(args.instance), args.seconds, args.max_states, weights)
             write_json(args.output, result)
             print(f"Certified optimal: {result['certified_optimal']}; evaluated states: {result['states']}")
         else:

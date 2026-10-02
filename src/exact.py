@@ -27,7 +27,7 @@ def partitions(order_ids, loads, capacity):
     yield from visit(0)
 
 
-def solve_exact(instance, seconds=30., max_states=200000):
+def solve_exact(instance, seconds=30., max_states=200000, weights=(1/3, 1/3, 1/3)):
     if len(instance.orders) > 6 or len({p.location for p in instance.products} - {instance.depot}) > 8:
         raise InputError("Exact joint enumeration is restricted to <=6 orders and <=8 non-depot SKU locations")
     from .models import number
@@ -38,7 +38,7 @@ def solve_exact(instance, seconds=30., max_states=200000):
     deadline = started + seconds
     ctx = Evaluator(instance)
     baseline = list_schedule(ctx, fcfs(ctx), "nn")
-    ctx.set_reference(baseline)
+    ctx.set_reference(baseline, weights)
     best = list_schedule(ctx, fcfs(ctx), "exact")
     best_cost = ctx.cost(best, "exact")
     states, certified = 0, True

@@ -33,6 +33,7 @@ venv.bak/
 # ==========================================
 # 2. Testing, Coverage & Type Checking
 # ==========================================
+/tests/
 .pytest_cache/
 .pytest_*/
 .pytest-work/
@@ -108,8 +109,7 @@ data/raw/
 /docs/USER_STUDY.md
 /docs/warehouse-improvement-plan.md
 
-# Local test suite and working documentation are kept outside the public upload.
-/tests/
+# Working documentation is kept local.
 /docs/**/*.md
 
 # Academic graduation/coursework report (kept local, not pushed to GitHub)

@@ -18,6 +18,8 @@ STOCHASTIC = {"B3", "LNS", "ALNS", "VNS", "ALNS_NO_SCHEDULE", "ALNS_NO_2OPT"}
 
 def benchmark(config, output, progress=None):
     output = Path(output)
+    if output.exists() and (not output.is_dir() or any(output.iterdir())):
+        raise InputError("Benchmark requires a new or empty directory; refusing to overwrite evidence")
     methods = config.get("methods", ["B0", "B2", "LNS", "ALNS", "VNS"])
     if not methods or "B0" not in methods or len(methods) != len(set(methods)) or any(m not in METHODS for m in methods):
         raise InputError("Benchmark methods must be unique, supported and include B0")

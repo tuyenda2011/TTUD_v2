@@ -12,6 +12,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+# These modules render results; no solver, evaluator, generator or validator
+# imports them. All other src files, including newly added files, remain guarded.
+DISPLAY_SOURCES = frozenset({"src/units.py", "src/plots.py"})
+
 from src.benchmark import STOCHASTIC, benchmark
 from src.comparison import paired_comparisons
 from src.evaluator import Evaluator
@@ -33,7 +37,8 @@ def digest(path):
 
 
 def source_hashes():
-    files = [*sorted((ROOT / "src").glob("*.py")), Path(__file__).resolve()]
+    files = [*sorted((ROOT / "src").glob("*.py")), Path(__file__).resolve(),
+             ROOT / "scripts" / "build_comparison_report.py", ROOT / "scripts" / "analyze_quality.py"]
     return {str(p.relative_to(ROOT)).replace("\\", "/"): digest(p) for p in files}
 
 
@@ -84,10 +89,39 @@ def prepare(protocol, output):
     print("Prepared and sealed all datasets before tuning or holdout evaluation", flush=True)
 
 
-def checked_protocol(output):
+def portable_basename(path):
+    """Read provenance paths produced on either Windows or POSIX."""
+    return str(path).replace("\\", "/").rsplit("/", 1)[-1]
+
+
+def source_status(locked):
+    current = source_hashes()
+    historical = locked["source_sha256"]
+    def partition(sources, predicate):
+        return {k: v for k, v in sources.items() if predicate(k)}
+    solver = lambda key: key.startswith("src/") and key not in DISPLAY_SOURCES
+    display = lambda key: key in DISPLAY_SOURCES
+    orchestration = lambda key: not key.startswith("src/")
+    return {"source_matches": historical == current,
+            "solver_source_matches": partition(historical, solver) == partition(current, solver),
+            "display_source_matches": partition(historical, display) == partition(current, display),
+            "orchestration_source_matches": partition(historical, orchestration) == partition(current, orchestration),
+            "audit_source_sha256": current}
+
+
+def checked_protocol(output, mode="execute"):
+    if mode not in ("execute", "audit"):
+        raise InputError(f"Unknown protocol check mode: {mode}")
     locked = checked_seal(output / "protocol.lock.json")
-    if locked["source_sha256"] != source_hashes():
+    status = source_status(locked)
+    if mode == "execute" and not status["source_matches"]:
         raise InputError("Source changed after preregistration; use a new study directory")
+    if not status["solver_source_matches"]:
+        raise InputError("Solver source changed after preregistration; historical evidence needs its original solver")
+    for relative, checksum in locked["source_sha256"].items():
+        snapshot = (output / "source" / relative).resolve()
+        if not snapshot.is_relative_to((output / "source").resolve()) or not snapshot.is_file() or digest(snapshot) != checksum:
+            raise InputError(f"Historical source snapshot changed: {relative}")
     for entries in locked["datasets"].values():
         for entry in entries:
             if fingerprint(read_instance(output / entry["file"])) != entry["sha256"]:
@@ -215,7 +249,7 @@ def exact_and_routing(output, locked):
     for entry in locked["datasets"]["exact"]:
         instance = read_instance(output / entry["file"])
         write_json(target / "instances" / f"{instance.name}.json", instance.to_dict())
-        oracle = solve_exact(instance, protocol["exact"]["seconds"], protocol["exact"]["max_states"])
+        oracle = solve_exact(instance, protocol["exact"]["seconds"], protocol["exact"]["max_states"], protocol["primary_weights"])
         records.append(save_validated(target, instance, oracle, f"{instance.name}-EXACT.json"))
         optimum = oracle["metrics"]["objective"]
         for method in protocol["methods"]:
@@ -245,7 +279,7 @@ def exact_and_routing(output, locked):
     write_json(target / "routing.json", routing)
 
 
-def verify(output, locked):
+def verify(output, locked, *, audit_path=None):
     chosen_search = selection(output)
     count = 0
     manifests = sorted(p for p in output.rglob("manifest.json") if "source" not in p.parts)
@@ -294,8 +328,17 @@ def verify(output, locked):
         instances = {}
         expected_config = expected_configs.get(relative)
         if expected_config is not None:
-            if manifest["config"] != expected_config:
+            # Absolute input paths are provenance, not a dependency on the old
+            # machine. Match filenames and audit content against sealed hashes.
+            stored_config = {**manifest["config"], "instances":
+                             [portable_basename(p) for p in manifest["config"]["instances"]]}
+            comparable_config = {**expected_config, "instances":
+                                 [portable_basename(p) for p in expected_config["instances"]]}
+            if stored_config != comparable_config:
                 raise InputError(f"Configuration mismatch: {relative}")
+            expected_sources = {portable_basename(k): v for k, v in locked["source_sha256"].items() if k.startswith("src/")}
+            if manifest.get("source_sha256") != expected_sources:
+                raise InputError(f"Benchmark source differs from sealed study: {relative}")
             expected_instances = {read_instance(p).name: fingerprint(read_instance(p)) for p in expected_config["instances"]}
             expected_keys = {(name, method, seed) for name in expected_instances for method in expected_config["methods"]
                              for seed in (expected_config["search_seeds"] if method in STOCHASTIC else expected_config["search_seeds"][:1])}
@@ -308,9 +351,12 @@ def verify(output, locked):
             if record["file"] in seen_files:
                 raise InputError(f"Duplicate run file in {path}: {record['file']}")
             seen_files.add(record["file"])
-            if not (path.parent / record["file"]).is_file():
+            raw_path = (path.parent / record["file"]).resolve()
+            if not raw_path.is_relative_to((path.parent / "raw").resolve()):
+                raise InputError(f"Raw result path escapes its directory: {record['file']}")
+            if not raw_path.is_file():
                 raise InputError(f"Missing raw result: {path.parent / record['file']}")
-            result = read(path.parent / record["file"])
+            result = read(raw_path)
             name = result["instance"]
             key = (name, result["method"], result.get("search", {}).get("seed") if expected_config else None)
             if key in seen_keys or key not in expected_keys:
@@ -330,8 +376,12 @@ def verify(output, locked):
             count += 1
         if seen_keys != expected_keys:
             raise InputError(f"Missing run identities: {relative}: {expected_keys - seen_keys}")
+        if {(path.parent / f).resolve() for f in seen_files} != {p.resolve() for p in (path.parent / "raw").glob("*.json")}:
+            raise InputError(f"Raw file set mismatch: {relative}")
         if expected_config:
             verify_aggregates(path.parent, raw_results)
+            from scripts.build_comparison_report import verify_benchmark
+            verify_benchmark(path.parent)
         study_results[relative] = raw_results
     ablation_rows = []
     for name, (method, _) in ablation_variants().items():
@@ -347,12 +397,21 @@ def verify(output, locked):
         raise InputError("Sensitivity summary/raw mismatch")
     exact_results = study_results[Path("exact") / "manifest.json"]
     oracles = {r["instance"]: r for r in exact_results if r["method"] == "EXACT"}
+    exact_objectives = {}
+    for entry in locked["datasets"]["exact"]:
+        instance = read_instance(output / entry["file"])
+        baseline = solve(instance, "B0", weights=protocol["primary_weights"])
+        exact_objectives[instance.name] = json.loads(json.dumps(baseline["objective_config"]))
     gaps, routing = [], []
     for result in exact_results:
+        if result["objective_config"] != exact_objectives[result["instance"]]:
+            raise InputError("Exact and heuristic objective scales differ from protocol")
         method = result["method"]
         if method in protocol["methods"]:
             oracle = oracles[result["instance"]]
             value, optimum = result["metrics"]["objective"], oracle["metrics"]["objective"]
+            if oracle["certified_optimal"] and value < optimum - 1e-9:
+                raise InputError("Heuristic scored below certified oracle")
             gaps.append({"instance": result["instance"], "method": method, "objective": value,
                          "exact_objective": optimum, "certified_optimal": oracle["certified_optimal"],
                          "gap_pct": 100 * (value - optimum) / optimum if oracle["certified_optimal"] and optimum > 0 else None,
@@ -361,9 +420,12 @@ def verify(output, locked):
             routing.append({"instance": result["instance"], "routing": method.removeprefix("FIXED_PLAN_"), **result["metrics"]})
     if read(output / "exact" / "summary.json") != gaps or read(output / "exact" / "routing.json") != routing:
         raise InputError("Exact/routing summary/raw mismatch")
-    write_json(output / "verification.json", {"solutions": count, "manifest_count": len(manifests),
-               "protocol_sha256": digest(output / "protocol.lock.json"),
-               "selection_sha256": digest(output / "selection.lock.json"), "source_matches": True})
+    if audit_path is not None:
+        seal(audit_path, {"solutions": count, "manifest_count": len(manifests),
+             "protocol_sha256": digest(output / "protocol.lock.json"),
+             "selection_sha256": digest(output / "selection.lock.json"),
+             "historical_snapshot_verified": True, **source_status(locked),
+             "created_utc": datetime.now(timezone.utc).isoformat()})
     print(f"Revalidated {count} solutions in {len(manifests)} experiment groups", flush=True)
     return count
 
@@ -446,7 +508,7 @@ def report(output, locked):
         if pair["method"] == "ALNS":
             lines.append(f"| {pair['reference']} | {pair['win']} | {pair['tie']} | {pair['loss']} | {pair['mean_improvement_pct']:.3f} |")
     lines += ["", ("Mỗi instance có một phiếu sau khi trung bình seed. Đây là thống kê mô tả, "
-              "không phải kiểm định ý nghĩa thống kê; sáu instance chưa đại diện mọi loại kho."), "",
+              "không phải kiểm định ý nghĩa thống kê; tập holdout chưa đại diện mọi loại kho."), "",
               f"ALNS có **{zero}/{total} ca 0 vòng**, **{adapted}/{total} ca có vòng hoàn thành sau cập nhật trọng số**.", "",
               "| Instance | Min iterations | Median iterations | Adapted runs |",
               "|---|---:|---:|---:|"]
@@ -525,13 +587,19 @@ def main():
     parser.add_argument("stage", choices=("prepare", "tune", "holdout", "ablation", "sensitivity", "exact", "report", "verify", "package", "all"))
     parser.add_argument("--protocol", type=Path, default=ROOT / "configs/research_protocol.json")
     parser.add_argument("--output", type=Path, default=ROOT / "results/research_20260919")
+    parser.add_argument("--audit-output", type=Path, help="Write a new sealed audit record (verify stage only)")
     args = parser.parse_args()
     output = args.output.resolve()
     if args.stage in ("prepare", "all"):
         prepare(read(args.protocol), output)
         if args.stage == "prepare":
             return
-    locked = checked_protocol(output)
+    if args.audit_output and args.stage != "verify":
+        raise InputError("--audit-output requires the verify stage")
+    locked = checked_protocol(output, mode="audit" if args.stage in ("verify", "package") else "execute")
+    if args.stage == "verify":
+        verify(output, locked, audit_path=args.audit_output)
+        return
     stages = {"tune": tune, "holdout": holdout, "ablation": ablation, "sensitivity": sensitivity,
               "exact": exact_and_routing, "report": report, "verify": verify, "package": package}
     for name in stages if args.stage == "all" else [args.stage]:

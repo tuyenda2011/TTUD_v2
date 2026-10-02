@@ -4,6 +4,7 @@ import json
 
 from src.generator import MAP_SCENARIOS, generate_scenario
 from src.models import InputError, Instance, read_instance
+from src.objectives import profile_weights
 from src.search import SearchConfig
 from src.solver import solve
 
@@ -77,12 +78,13 @@ def is_stale(snapshot, draft):
 
 def run_scenario(instance, draft, progress=None):
     methods = methods_for(draft)
+    weights = profile_weights(draft.get("objective_profile", "balanced"))
     results = {}
     for index, method in enumerate(methods):
         if progress:
             progress(index / len(methods), f"Đang chạy {method} · {index + 1}/{len(methods)}")
         results[method] = solve(instance, method, draft["seed"],
-                                SearchConfig(seconds=draft["seconds"], iterations=2000))
+                                SearchConfig(seconds=draft["seconds"], iterations=100000), weights)
     return {"instance": instance.to_dict(), "results": results, "draft": dict(draft),
             "seed": draft["seed"], "budget": draft["seconds"], "saved_playback": False}
 

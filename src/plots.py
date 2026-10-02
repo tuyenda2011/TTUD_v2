@@ -68,18 +68,20 @@ def gantt_figure(instance, result):
     fig, ax = plt.subplots(figsize=(10, max(2.4, instance.operations.pickers * .6)), layout="constrained")
     fig.patch.set_facecolor("#f8fafc")
     ax.set_facecolor("#f8fafc")
+    makespan = result["metrics"]["makespan"]
+    extent = makespan if makespan > 0 else 1.
     for batch in result["batches"]:
         picker = batch["picker"]
         color = COLORS[(picker - 1) % len(COLORS)]
         late = batch["tardiness"] > 1e-9
         ax.barh(picker, batch["duration"], left=batch["start"], height=.55, color=color, alpha=.85, edgecolor="#dc2626" if late else "white", linewidth=2 if late else .8)
-        if batch["duration"] > max(result["metrics"]["makespan"], 1) * .055:
+        if batch["duration"] > extent * .055:
             ax.text(batch["start"] + batch["duration"] / 2, picker, batch["id"].split("-")[-1], ha="center", va="center", color="white", fontsize=8)
     ax.set_yticks(range(1, instance.operations.pickers + 1), [f"Nhân viên {i}" for i in range(1, instance.operations.pickers + 1)])
     ax.invert_yaxis()
     ax.set_xlabel(f"Thời gian từ lúc bắt đầu ({unit_label(instance, 'time')})")
     ax.set_title("Lịch các chuyến lấy hàng")
-    ax.set_xlim(0, max(1., result["metrics"]["makespan"]) * 1.03)
+    ax.set_xlim(0, extent * 1.03)
     ax.grid(axis="x", color="#cbd5e1", alpha=.4)
     ax.set_axisbelow(True)
     for spine in ax.spines.values():
