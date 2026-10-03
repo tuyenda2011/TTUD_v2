@@ -435,7 +435,7 @@ def render_simulation(instance, result, height=750):
   /* Live HUD Cards */
   .hud-grid {{
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
     gap: 8px;
     max-height: 110px;
     overflow-y: auto;
@@ -501,7 +501,7 @@ def render_simulation(instance, result, height=750):
   <div class="controls-bar">
     <div class="btn-group">
       <button class="sim-btn" id="playBtn">⏸ Tạm dừng</button>
-      <button class="sim-btn" id="resetBtn" title="Tua về đầu">↺ Đầu ca</button>
+      <button class="sim-btn" id="resetBtn" title="Tua về đầu">↺ Về đầu</button>
     </div>
 
     <div class="timeline-wrap">
@@ -511,10 +511,10 @@ def render_simulation(instance, result, height=750):
     </div>
 
     <div class="btn-group">
-      <button class="sim-btn speed-btn" data-speed="0.5" title="Chậm">0.5x</button>
-      <button class="sim-btn active speed-btn" data-speed="1" title="Chuẩn (~30s trọn vẹn)">1x</button>
-      <button class="sim-btn speed-btn" data-speed="2" title="Nhanh (~15s)">2x</button>
-      <button class="sim-btn speed-btn" data-speed="5" title="Siêu tốc (~6s)">5x</button>
+      <button class="sim-btn speed-btn" data-speed="0.5" title="Phát chậm (khoảng 60 giây)">0.5x</button>
+      <button class="sim-btn active speed-btn" data-speed="1" title="Tốc độ mặc định (khoảng 30 giây)">1x</button>
+      <button class="sim-btn speed-btn" data-speed="2" title="Phát nhanh (khoảng 15 giây)">2x</button>
+      <button class="sim-btn speed-btn" data-speed="5" title="Phát nhanh (khoảng 6 giây)">5x</button>
     </div>
 
     <div class="btn-group">
@@ -555,7 +555,7 @@ def render_simulation(instance, result, height=750):
   }}
 
   function formatLoad(value) {{
-    return `Đang chở ${{formatNumber(value)}} ${{capacityUnit}} · Sức chứa ${{formatNumber(simData.capacity)}} ${{capacityUnit}}`;
+    return `Tải: ${{formatNumber(value)}} / ${{formatNumber(simData.capacity)}} ${{capacityUnit}}`;
   }}
 
   // Auto-scale base speed so the full simulation plays comfortably in ~30 seconds at 1x
@@ -756,18 +756,18 @@ def render_simulation(instance, result, height=750):
     const depot = simData.depot;
 
     if (!segments || segments.length === 0) {{
-      return {{ x: depot.x, y: depot.y, state: "idle", load: 0, info: "Nghỉ tại Depot", pick_qty: 0, heading: 0, setup_pct: 0 }};
+      return {{ x: depot.x, y: depot.y, state: "idle", load: 0, info: "Đang chờ tại điểm xuất phát", pick_qty: 0, heading: 0, setup_pct: 0 }};
     }}
 
     // After last batch
     const lastSeg = segments[segments.length - 1];
     if (t >= lastSeg.t_end) {{
-      return {{ x: lastSeg.x2, y: lastSeg.y2, state: "idle", load: 0, info: "Hoàn tất nhiệm vụ", pick_qty: 0, heading: 0, setup_pct: 100 }};
+      return {{ x: lastSeg.x2, y: lastSeg.y2, state: "idle", load: 0, info: "Đã hoàn thành công việc", pick_qty: 0, heading: 0, setup_pct: 100 }};
     }}
 
     // Before first batch
     if (t <= segments[0].t_start) {{
-      return {{ x: segments[0].x1, y: segments[0].y1, state: "idle", load: 0, info: "Sẵn sàng tại Depot", pick_qty: 0, heading: 0, setup_pct: 0 }};
+      return {{ x: segments[0].x1, y: segments[0].y1, state: "idle", load: 0, info: "Sẵn sàng tại điểm xuất phát", pick_qty: 0, heading: 0, setup_pct: 0 }};
     }}
 
     // Find active segment
@@ -799,7 +799,7 @@ def render_simulation(instance, result, height=750):
           y: seg.y2,
           state: "idle",
           load: seg.load,
-          info: "Chờ tại vị trí",
+          info: "Đang chờ",
           pick_qty: 0,
           heading: 0,
           setup_pct: 0
@@ -807,7 +807,7 @@ def render_simulation(instance, result, height=750):
       }}
     }}
 
-    return {{ x: depot.x, y: depot.y, state: "idle", load: 0, info: "Nghỉ tại Depot", pick_qty: 0, heading: 0, setup_pct: 0 }};
+    return {{ x: depot.x, y: depot.y, state: "idle", load: 0, info: "Đang chờ tại điểm xuất phát", pick_qty: 0, heading: 0, setup_pct: 0 }};
   }}
 
   // Unified clock formatting
@@ -1077,7 +1077,7 @@ def render_simulation(instance, result, height=750):
         ctx.stroke();
         ctx.restore();
 
-        drawStatusBadge(`Soạn ${{st.setup_pct}}%`, item, true);
+        drawStatusBadge(`Chuẩn bị ${{st.setup_pct}}%`, item, true);
       }}
 
       // Picking Ripple Pulse Effect
@@ -1092,7 +1092,7 @@ def render_simulation(instance, result, height=750):
         ctx.stroke();
         ctx.globalAlpha = 1.0;
 
-        drawStatusBadge(`+${{st.pick_qty || 1}} SP`, item);
+        drawStatusBadge(`Lấy ${{st.pick_qty || 1}}`, item);
       }}
 
       // Unloading Effect

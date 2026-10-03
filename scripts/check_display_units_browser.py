@@ -71,7 +71,7 @@ def main():
         page = browser.new_page(viewport={"width": 1440, "height": 1000})
         page.on("pageerror", lambda error: errors.append(str(error)))
         page.goto(args.url)
-        expect(page.locator(".st-key-run_main")).to_be_visible(timeout=45000)
+        expect(page.locator(".st-key-run").get_by_role("button")).to_be_visible(timeout=45000)
 
         def settled():
             expect(page.get_by_test_id("stStatusWidget")).to_have_count(0, timeout=45000)
@@ -80,25 +80,28 @@ def main():
 
         def select(key, value):
             settled()
-            control = page.locator(f".st-key-{key}").get_by_role("combobox")
-            control.scroll_into_view_if_needed()
-            control.fill(value)
-            expect(page.get_by_role("option", name=value, exact=True)).to_be_visible(timeout=15000)
-            control.press("ArrowDown")
-            control.press("Enter")
+            widget = page.locator(f".st-key-{key}")
+            control = widget.get_by_role("combobox")
+            control.press("Escape")
+            widget.get_by_role("button", name="Open", exact=True).click()
+            option = page.get_by_role("option", name=value, exact=True)
+            expect(option).to_be_visible(timeout=15000)
+            option.click()
             expect(control).to_have_value(value)
             settled()
 
         def run(name):
             page.locator(".st-key-run").get_by_role("button").click()
-            expect(page.get_by_text(f"Lần chạy: {name} ·", exact=False)).to_be_visible(timeout=45000)
+            expect(page.get_by_text(f"{name} ·", exact=False)).to_be_visible(timeout=45000)
+            expect(page.locator(".st-key-result_method")).to_be_visible(timeout=45000)
             expect(page.get_by_test_id("stMetric")).to_have_count(3, timeout=45000)
             settled()
+            assert snapshot(f"{name}-run")["instance"]["name"] == name
 
         def snapshot(name):
             page.get_by_text("Tải kết quả", exact=True).click()
             with page.expect_download() as download:
-                page.get_by_role("button", name="Tải toàn bộ lần chạy (gốc)", exact=True).click()
+                page.get_by_role("button", name="Tải toàn bộ lần chạy (JSON)", exact=True).click()
             path = output / f"{name}-snapshot.json"
             download.value.save_as(path)
             data = validate_snapshot(json.loads(path.read_text(encoding="utf-8")))
@@ -108,7 +111,7 @@ def main():
             return data
 
         def simulation():
-            page.get_by_role("tab", name="🎮 Mô phỏng động", exact=True).click()
+            page.get_by_role("tab", name="Mô phỏng", exact=True).click()
             frame = page.frame_locator("iframe")
             expect(frame.locator("#timelineSlider")).to_be_visible(timeout=15000)
             frame.locator("#resetBtn").click()
@@ -124,11 +127,11 @@ def main():
             page.get_by_test_id("stMetric").nth(1).scroll_into_view_if_needed()
             page.screenshot(path=str(output / f"{name}-desktop.png"), full_page=True)
             page.locator("iframe").screenshot(path=str(output / f"{name}-desktop-replay.png"))
-            page.set_viewport_size({"width": 390, "height": 844})
-            page.wait_for_function("document.querySelector('[data-testid=stSidebar]').getBoundingClientRect().right <= 1")
+            page.set_viewport_size({"width": 1366, "height": 768})
+            expect(page.locator(".st-key-run").get_by_role("button")).to_be_visible()
             page.get_by_test_id("stMetric").nth(1).scroll_into_view_if_needed()
-            page.screenshot(path=str(output / f"{name}-mobile.png"), full_page=True)
-            page.locator("iframe").screenshot(path=str(output / f"{name}-mobile-replay.png"))
+            page.screenshot(path=str(output / f"{name}-laptop.png"), full_page=True)
+            page.locator("iframe").screenshot(path=str(output / f"{name}-laptop-replay.png"))
             assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
             assert frame.locator("body").evaluate("el => el.scrollWidth <= el.clientWidth")
             metric_layout = page.get_by_test_id("stMetric").nth(1).get_by_test_id("stMetricValue").evaluate(
@@ -136,12 +139,12 @@ def main():
                 "text: node.textContent, client_width: node.clientWidth, scroll_width: node.scrollWidth, "
                 "white_space: getComputedStyle(node).whiteSpace, text_overflow: getComputedStyle(node).textOverflow}))"
             )
-            (output / f"{name}-mobile-layout.json").write_text(json.dumps(metric_layout, ensure_ascii=False, indent=2), encoding="utf-8")
+            (output / f"{name}-laptop-layout.json").write_text(json.dumps(metric_layout, ensure_ascii=False, indent=2), encoding="utf-8")
             assert all(row["scroll_width"] <= row["client_width"] for row in metric_layout), (name, metric_layout)
             page.set_viewport_size({"width": 1440, "height": 1000})
             page.wait_for_function("document.querySelector('[data-testid=stSidebar]').getBoundingClientRect().left >= 0")
 
-        select("source", "JSON tải lên")
+        select("source", "Tải dữ liệu JSON")
         expect(page.locator(".st-key-upload")).to_be_visible()
         expect(page.locator(".st-key-orders")).to_have_count(0)
         expect(page.get_by_text("Nâng cao", exact=True)).to_have_count(1)
@@ -187,13 +190,13 @@ def main():
                 seek(frame, duration / 2)
                 load_text = frame.locator("#card-load-p1").inner_text()
                 status_text = frame.locator("#card-status-p1").inner_text()
-                assert re.search(r"Đang chở\s+2\.5\s+kg\s+·\s+Sức chứa\s+10(?:\.0)?\s+kg", load_text), (name, load_text)
+                assert re.search(r"Tải:\s+2\.5\s*/\s*10(?:\.0)?\s+kg", load_text), (name, load_text)
                 assert re.search(r"Lấy\s+1\s+sản phẩm", status_text), (name, status_text)
                 payload = slider.evaluate("() => simData")
                 picking = [segment for segment in payload["pickers"][0]["segments"] if segment["state"] == "picking"]
                 assert picking and picking[0]["pick_qty"] == 1 and picking[0]["load"] == 2.5
             else:
-                expect(frame.locator("#card-status-p1")).to_have_text("Hoàn tất nhiệm vụ")
+                expect(frame.locator("#card-status-p1")).to_have_text("Đã hoàn thành công việc")
                 frame.locator("#playBtn").click()
                 expect(slider).to_have_value("0")
                 assert "NaN" not in frame.locator("body").inner_text()
@@ -215,7 +218,7 @@ def main():
                             "load_during_pick": load_text, "picking_info": status_text})
             print(f"PASS {name}", flush=True)
 
-        select("source", "Kris — benchmark tác giả")
+        select("source", "Bộ dữ liệu Kris")
         expect(page.locator(".st-key-kris_file")).to_be_visible()
         expect(page.locator(".st-key-upload")).to_have_count(0)
         run("Kris-instances_106_1")

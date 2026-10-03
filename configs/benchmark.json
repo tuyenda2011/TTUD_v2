@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "kind": "warehouse_benchmark_experiment",
+  "base_dir": "..",
+  "defaults": {
+    "methods": ["B0", "B2", "LNS", "ALNS", "VNS"],
+    "references": ["B0", "B2", "LNS", "VNS"],
+    "weights": [0.3333333333333333, 0.3333333333333333, 0.3333333333333333]
+  },
+  "presets": {
+    "quick": {
+      "search_seeds": [1, 2],
+      "search": {"seconds": 0.15, "iterations": 30, "candidate_limit": 12, "segment": 5}
+    },
+    "report": {
+      "search_seeds": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "search": {"seconds": 3.0, "iterations": 100000, "candidate_limit": 24, "segment": 10}
+    }
+  },
+  "groups": [
+    {
+      "name": "maps",
+      "config": {
+        "scenarios": ["single_block", "double_block", "mega_hub", "rush_hour", "abc_zonal"]
+      },
+      "presets": {
+        "quick": {
+          "scenario_seeds": [42],
+          "scenario_overrides": {
+            "single_block": {"n": 6}, "double_block": {"n": 6}, "mega_hub": {"n": 6},
+            "rush_hour": {"n": 6}, "abc_zonal": {"n": 6}
+          }
+        },
+        "report": {"scenario_seeds": [42, 43, 44]}
+      }
+    },
+    {
+      "name": "scalability",
+      "config": {
+        "evaluation_role": "scalability",
+        "generator": {"pickers": 3, "capacity": 30, "aisles": 5, "rows": 6, "tightness": 0.15}
+      },
+      "presets": {
+        "quick": {"sizes": [6, 12], "instance_seeds": [301]},
+        "report": {"sizes": [20, 50, 100, 200], "instance_seeds": [301, 302, 303]}
+      }
+    },
+    {
+      "name": "kris",
+      "optional": true,
+      "catalog": "data/processed/kris_small/catalog.json",
+      "selection": {"orders": [6, 12, 18]},
+      "preset_selection": {"quick": {"limit_per_size": 1}, "report": {"limit_per_size": 0}}
+    }
+  ]
+}

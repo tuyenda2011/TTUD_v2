@@ -1,7 +1,10 @@
 """Reproducible experiment runner with raw results and per-instance paired summaries."""
 import csv
 import hashlib
+import json
+import os
 import platform
+import stat
 import statistics
 import time
 from collections import defaultdict
@@ -16,8 +19,51 @@ from .solver import METHODS, fingerprint, solve
 STOCHASTIC = {"B3", "LNS", "ALNS", "VNS", "ALNS_NO_SCHEDULE", "ALNS_NO_2OPT"}
 
 
+def _file_identity(info):
+    identity = (info.st_dev, info.st_ino) if info.st_ino else ()
+    birth = getattr(info, "st_birthtime_ns", None)
+    if birth is None and os.name == "nt":
+        birth = info.st_ctime_ns
+    return identity + (birth,) if birth is not None else identity
+
+
+def _seal_file(path):
+    info = path.stat(follow_symlinks=False)
+    if not stat.S_ISREG(info.st_mode):
+        raise InputError(f"Benchmark evidence is not a regular file: {path}")
+    return path, _file_identity(info), hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+class _OutputGuard:
+    def __init__(self, output):
+        self.directories = {path: _file_identity(path.stat(follow_symlinks=False))
+                            for path in (output, output / "raw", output / "instances")}
+        self.headers = [_seal_file(output / name) for name in ("config.json", "preregistered.json")]
+
+    def check(self, *files):
+        path = None
+        try:
+            for path, expected in self.directories.items():
+                info = path.stat(follow_symlinks=False)
+                if not stat.S_ISDIR(info.st_mode) or _file_identity(info) != expected:
+                    raise InputError(f"Benchmark output directory was replaced: {path}")
+            for path, identity, digest in (*self.headers, *files):
+                if _seal_file(path)[1:] != (identity, digest):
+                    raise InputError(f"Benchmark evidence changed during execution: {path}")
+        except OSError as exc:
+            raise InputError(f"Benchmark evidence disappeared during execution: {path}; "
+                             "refusing to recreate missing evidence") from exc
+
+
+def _write_evidence_json(path, data):
+    # Parent directories are sealed; never recreate them after external loss.
+    content = json.dumps(data, ensure_ascii=False, indent=2, allow_nan=False) + "\n"
+    with path.open("x", encoding="utf-8") as stream:
+        stream.write(content)
+
+
 def benchmark(config, output, progress=None):
-    output = Path(output)
+    output = Path(output).resolve()
     if output.exists() and (not output.is_dir() or any(output.iterdir())):
         raise InputError("Benchmark requires a new or empty directory; refusing to overwrite evidence")
     methods = config.get("methods", ["B0", "B2", "LNS", "ALNS", "VNS"])
@@ -31,7 +77,9 @@ def benchmark(config, output, progress=None):
     options = SearchConfig(**config.get("search", {})).validate()
     started = time.perf_counter()
     rows, runs = [], []
-    source_hashes = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(Path(__file__).parent.glob("*.py"))}
+    source_root = Path(__file__).parent
+    source_hashes = {p.relative_to(source_root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+                     for p in sorted(source_root.rglob("*.py"))}
     instance_paths = config.get("instances", [])
     scenario_keys = config.get("scenarios", [])
     if instance_paths and scenario_keys:
@@ -65,21 +113,37 @@ def benchmark(config, output, progress=None):
     write_json(output / "preregistered.json", {
         "config": config, "source_sha256": source_hashes,
         "instances": {instance.name: fingerprint(instance) for instance, _ in datasets}})
+    (output / "raw").mkdir()
+    (output / "instances").mkdir()
+    guard = _OutputGuard(output)
+    saved_files = []
     for instance, instance_seed in datasets:
             n = len(instance.orders)
-            write_json(output / "instances" / f"{instance.name}.json", instance.to_dict())
+            guard.check()
+            instance_path = output / "instances" / f"{instance.name}.json"
+            _write_evidence_json(instance_path, instance.to_dict())
+            instance_seal = _seal_file(instance_path)
+            saved_files.append(instance_seal)
             for method in methods:
                 for seed in search_seeds if method in STOCHASTIC else [search_seeds[0]]:
+                    guard.check(instance_seal)
                     result = solve(instance, method, seed, options, tuple(config.get("weights", [1/3, 1/3, 1/3])))
+                    guard.check(instance_seal)
                     file_name = f"{instance.name}-{method}-seed{seed}.json"
-                    write_json(output / "raw" / file_name, result)
+                    result_path = output / "raw" / file_name
+                    _write_evidence_json(result_path, result)
+                    result_seal = _seal_file(result_path)
+                    saved_files.append(result_seal)
                     row = {"instance": instance.name, "n": n, "instance_seed": instance_seed, "method": method, "search_seed": seed, "feasible": result["feasible"], **result["metrics"], **result["timing"],
                            **{key: result["search"][key] for key in ("iterations_completed", "stop_reason", "adaptation_updates", "adapted_iterations", "search_executed", "budget_scope")}}
                     rows.append(row)
                     runs.append({"file": f"raw/{file_name}", "instance_sha256": result["instance_sha256"]})
                     if progress:
                         progress(row)
-    with (output / "runs.csv").open("w", newline="", encoding="utf-8") as file:
+                    guard.check(instance_seal, result_seal)
+    # The complete inventory is checked only at completion, keeping run guards linear.
+    guard.check(*saved_files)
+    with (output / "runs.csv").open("x", newline="", encoding="utf-8") as file:
         writer = csv.DictWriter(file, fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
@@ -105,10 +169,13 @@ def benchmark(config, output, progress=None):
             sign = 1 if metric == "on_time_rate" else -1
             summary[metric] = {"mean": avg, "median": statistics.median(values), "std": statistics.stdev(values) if len(values) > 1 else 0., "best": max(values) if sign == 1 else min(values), "difference_vs_B0": avg - baseline[metric], "improvement_pct_vs_B0": 100 * sign * (avg - baseline[metric]) / baseline[metric] if baseline[metric] else None}
         summaries.append(summary)
-    write_json(output / "summary.json", summaries)
+    guard.check()
+    _write_evidence_json(output / "summary.json", summaries)
     comparisons = paired_comparisons(rows, tuple(config.get("references", ["B0", "B2", "B3", "LNS", "VNS"])))
-    write_json(output / "comparison.json", comparisons)
-    write_json(output / "manifest.json", {"config": config, "source_sha256": source_hashes, "python": platform.python_version(), "platform": platform.platform(), "cpu": platform.processor(), "elapsed_seconds": time.perf_counter() - started, "runs": runs})
+    guard.check()
+    _write_evidence_json(output / "comparison.json", comparisons)
+    guard.check()
+    _write_evidence_json(output / "manifest.json", {"config": config, "source_sha256": source_hashes, "python": platform.python_version(), "platform": platform.platform(), "cpu": platform.processor(), "elapsed_seconds": time.perf_counter() - started, "runs": runs})
     lines = ["# Kết quả benchmark", "", "Dữ liệu tổng hợp; kết quả đo từ các lần chạy trong thư mục raw. Mỗi hàng tổng hợp seed trên cùng một instance, không coi seed là các instance độc lập.", "", "| Instance | Method | Runs | F mean ± std | Distance mean (m) | Makespan mean (min) | Tardiness mean (min) | Late mean | On-time rate | Total mean (s) | ΔF vs B0 (%) |", "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|"]
     if config.get("instances"):
         lines[2] = "Dữ liệu từ file cấu hình; giữ đơn vị nguồn và mục tiêu hạn mềm của project. Không so với best-known của bài toán gốc. Tổng hợp seed trong từng instance."
@@ -143,5 +210,8 @@ def benchmark(config, output, progress=None):
         lines.append(f"| {row['instance']} | {row['method']} | {diag['zero_iteration_runs']} | "
                      f"{diag['iterations_min']} / {diag['iterations_median']} | {diag['adapted_runs']} | "
                      f"{diag['initialization_mean_seconds']:.4f} | {diag['search_mean_seconds']:.4f} |")
-    (output / "REPORT.md").write_text("\n".join(lines), encoding="utf-8")
+    guard.check()
+    with (output / "REPORT.md").open("x", encoding="utf-8") as file:
+        file.write("\n".join(lines))
+    guard.check(*saved_files)
     return rows

@@ -6,8 +6,10 @@ import pandas as pd
 import streamlit as st
 
 from demo.simulation import render_simulation
+from demo.evaluation import current_run_view
 from demo.state import KRIS, SYNTHETIC, UPLOAD, improvement, upload_digest
 from src.generator import MAP_SCENARIOS
+from src.evaluation_figures import MAP_LABELS
 from src.models import Instance
 from src.objectives import WEIGHT_PROFILES
 from src.plots import gantt_figure, warehouse_figure
@@ -16,21 +18,22 @@ from src.units import KRIS_DISPLAY_CONVENTION, display_snapshot, format_duration
 
 def style():
     st.markdown("""<style>
-    .stMainBlockContainer {max-width:1120px;padding-top:3rem;padding-bottom:3rem;}
-    h1 {font-size:2rem !important;letter-spacing:-.025em;}
-    h2 {font-size:1.5rem !important;}
+    .stMainBlockContainer {max-width:1440px;padding:2rem 2rem 1.5rem;}
+    .stMainBlockContainer [data-testid="stVerticalBlock"] {gap:.5rem;}
+    h1 {font-size:1.75rem !important;letter-spacing:-.025em;}
+    h2 {font-size:1.375rem !important;}
     h3 {font-size:1.1rem !important;}
-    [data-testid="stMetric"] {padding:12px 0;}
-    [data-testid="stMetricValue"] {font-size:2rem;}
+    [data-testid="stMetric"] {padding:4px 0;}
+    [data-testid="stMetricValue"] {font-size:1.75rem;font-variant-numeric:tabular-nums;}
     [data-testid="stMetricValue"], [data-testid="stMetricValue"] * {
       white-space:normal !important;overflow-wrap:anywhere;text-overflow:clip !important;height:auto;
     }
     button:focus-visible, a:focus-visible {outline:3px solid #176B5B !important;outline-offset:3px;}
-    @media(max-width:640px) {
-      .stMainBlockContainer {padding:3.5rem 1rem 2rem;}
-      h1 {font-size:1.65rem !important;}
-      [data-testid="stMetric"] {padding:4px 0;}
+    .st-key-simulation_canvas [data-testid="stElementContainer"]:has(> iframe[data-testid="stIFrame"]) {
+      flex:0 0 auto;
+      height:clamp(400px,calc(100vh - 365px),560px);
     }
+    .st-key-simulation_canvas iframe[data-testid="stIFrame"] {height:100%;}
     </style>""", unsafe_allow_html=True)
 
 
@@ -44,8 +47,10 @@ def reset_map_defaults():
 def sidebar(root, on_run):
     content = None
     with st.sidebar:
-        st.header("Chuẩn bị dữ liệu")
-        source = st.selectbox("Nguồn dữ liệu", [SYNTHETIC, KRIS, UPLOAD], key="source")
+        st.subheader("Dữ liệu")
+        source_labels = {SYNTHETIC: "Dữ liệu mô phỏng", KRIS: "Bộ dữ liệu Kris", UPLOAD: "Tải dữ liệu JSON"}
+        source = st.selectbox("Nguồn dữ liệu", [SYNTHETIC, KRIS, UPLOAD], key="source",
+                              format_func=source_labels.get)
         draft = {"source": source}
 
         if st.session_state.get("last_active_source") != source:
@@ -53,20 +58,13 @@ def sidebar(root, on_run):
             st.session_state.pop("snapshot", None)
 
         if source == SYNTHETIC:
-            scen_labels = {
-                "single_block": "🟢 Kho tiêu chuẩn (Single-Block)",
-                "double_block": "🟡 Kho 2 khối có lối đi giữa (Double-Block)",
-                "mega_hub": "🏭 Đại kho vận 3 khối (Mega Hub)",
-                "rush_hour": "⚡ Giờ cao điểm hạn gấp (Rush Hour)",
-                "abc_zonal": "📦 Phân khu tần suất (ABC Zonal)",
-            }
-
-            scenario = st.selectbox("Kịch bản kho & Bản đồ", list(MAP_SCENARIOS.keys()),
-                                    format_func=lambda k: scen_labels.get(k, k), key="scenario")
+            scenario = st.selectbox("Kịch bản kho", list(MAP_SCENARIOS.keys()),
+                                    format_func=MAP_LABELS.get, key="scenario",
+                                    help="Kho chuẩn: một khối. Kho 2 khối: một lối ngang giữa kho. "
+                                         "Kho lớn: ba khối. Cao điểm: hạn giao gấp. Phân khu ABC: hàng thường lấy ở gần điểm xuất phát.")
             draft["scenario"] = scenario
             scen = MAP_SCENARIOS[scenario]
 
-            # Khi người dùng đổi kịch bản map: tự động nạp thông số mặc định của map đó và làm mới kết quả cũ
             if st.session_state.get("last_scenario") != scenario:
                 st.session_state["last_scenario"] = scenario
                 st.session_state["orders"] = int(scen["n"])
@@ -76,17 +74,14 @@ def sidebar(root, on_run):
                 st.session_state.pop("snapshot", None)
                 st.session_state.pop("result_method", None)
 
-            st.caption(f"ℹ️ {scen['description']}")
-
             for key, value in (("orders", int(scen["n"])), ("pickers", int(scen["pickers"])),
                                ("capacity", int(scen["capacity"])), ("tightness", float(scen["tightness"]))):
                 st.session_state.setdefault(key, value)
-            draft["orders"] = st.number_input("Số đơn", 1, 300, key="orders")
-            draft["pickers"] = st.number_input("Số nhân viên", 1, 12, key="pickers")
+            order_column, picker_column = st.columns(2)
+            draft["orders"] = order_column.number_input("Số đơn", 1, 300, key="orders")
+            draft["pickers"] = picker_column.number_input("Số nhân viên", 1, 12, key="pickers")
             draft["capacity"] = st.number_input("Sức chứa mỗi chuyến (sản phẩm)", 1, 500, key="capacity")
 
-            st.button("↺ Đặt lại thông số chuẩn", key="reset_map_defaults", on_click=reset_map_defaults,
-                      help="Khôi phục số đơn, nhân viên, sức chứa và độ nới hạn theo mặc định của map đang chọn")
         elif source == KRIS:
             try:
                 catalog = json.loads((root / "data/processed/kris_small/catalog.json").read_text(encoding="utf-8"))
@@ -95,35 +90,40 @@ def sidebar(root, on_run):
                     draft["file"] = st.selectbox("Bộ dữ liệu Kris", list(by_file), key="kris_file",
                         format_func=lambda name: f"{name.split('/')[-1].removesuffix('.json')} · {by_file[name]['orders']} đơn")
                 else:
-                    st.caption("Chưa có dữ liệu Kris. Bạn có thể dùng dữ liệu tổng hợp.")
+                    st.caption("Chưa có dữ liệu Kris. Bạn có thể chọn dữ liệu mô phỏng.")
             except (OSError, ValueError, KeyError, TypeError):
-                st.caption("Chưa đọc được catalog Kris. Bạn có thể dùng dữ liệu tổng hợp.")
+                st.caption("Không đọc được danh sách dữ liệu Kris. Bạn có thể chọn dữ liệu mô phỏng.")
         else:
-            upload = st.file_uploader("File dữ liệu JSON", type=["json"], key="upload",
-                                      help="File instance theo docs/SCHEMA.md, không phải file kết quả.")
+            upload = st.file_uploader("Tải dữ liệu đầu vào (JSON)", type=["json"], key="upload",
+                                      help="Tệp mô tả kho, đơn hàng và nhân viên theo định dạng JSON của dự án.")
             content = upload.getvalue() if upload is not None else None
             draft["upload_sha256"] = upload_digest(content)
 
         with st.expander("Nâng cao", expanded=False):
             if source == SYNTHETIC:
-                draft["tightness"] = st.slider("Độ nới hạn", .02, 1., step=.01, key="tightness",
-                                               help="Giá trị nhỏ làm thời hạn giao đơn gấp hơn.")
-            draft["seed"] = st.number_input("Seed", min_value=0, value=42, key="seed")
-            draft["seconds"] = st.slider("Ngân sách mỗi thuật toán (giây)", .2, 10., 2., .2, key="budget")
+                st.button("Khôi phục mặc định", key="reset_map_defaults", on_click=reset_map_defaults,
+                          help="Đặt lại số đơn, nhân viên, sức chứa và hạn giao của kịch bản đang chọn.")
+                draft["tightness"] = st.slider("Mức nới hạn giao", .02, 1., step=.01, key="tightness",
+                                               help="Giá trị càng nhỏ thì thời hạn giao hàng càng gấp.")
+            st.session_state.setdefault("seed", 42)
+            st.session_state.setdefault("budget", 2.0)
+            draft["seed"] = st.number_input("Seed ngẫu nhiên", min_value=0, key="seed",
+                                            help="Giữ cùng seed để tạo lại dữ liệu và cách khởi tạo thuật toán.")
+            draft["seconds"] = st.slider("Thời gian tìm kiếm (giây)", .2, 10., step=.2, key="budget",
+                                          help="Áp dụng riêng cho từng thuật toán tìm kiếm. Một bước xử lý có thể khiến thời gian thực tế vượt mức này.")
             profile_labels = {"balanced": "Cân bằng", "distance": "Giảm quãng đường",
                               "makespan": "Hoàn tất sớm", "tardiness": "Giảm tổng độ trễ"}
             draft["objective_profile"] = st.selectbox(
                 "Ưu tiên tối ưu", list(WEIGHT_PROFILES), key="objective_profile",
                 format_func=profile_labels.get,
-                help="Tăng trọng số của tiêu chí được chọn; vẫn cho phép trễ hạn.")
-            st.caption("Giảm tổng độ trễ vẫn có thể tăng số đơn trễ. Đổi ưu tiên cần chạy lại.")
-            draft["comparison"] = st.checkbox("So sánh 5 thuật toán: B0, B2, LNS, ALNS, VNS", value=False, key="comparison")
+                help="Ưu tiên tiêu chí được chọn khi tính điểm F. Đơn hàng vẫn có thể bị trễ.")
+            draft["comparison"] = st.checkbox("So sánh cả 5 thuật toán", key="comparison",
+                                               help="Chạy B0, B2, LNS, ALNS và VNS trên cùng dữ liệu. "
+                                                    "Mặc định chạy B0 và ALNS; ngân sách áp dụng riêng cho mỗi thuật toán.")
             draft["vns"] = draft["comparison"]
-            st.caption("Mặc định B0 và ALNS. Ngân sách tính riêng cho từng thuật toán tìm kiếm.")
 
         st.button("Chạy tối ưu", type="primary", width="stretch", key="run",
                   on_click=on_run, disabled=st.session_state.get("run_status") == "running")
-        st.caption("Mỗi chuyến gom nhiều đơn, lấy đủ hàng rồi quay về điểm xuất phát.")
     return draft, content
 
 
@@ -150,8 +150,11 @@ def route_view(instance, result):
         if st.session_state.get("route_batch") not in options:
             st.session_state["route_batch"] = options[0]
         batch = st.selectbox("Chuyến lấy hàng", options, key="route_batch")
-        figure(warehouse_figure(instance, result, None if picker == "Tất cả" else picker,
-                                None if batch == "Tất cả" else batch))
+        route_figure = warehouse_figure(instance, result, None if picker == "Tất cả" else picker,
+                                        None if batch == "Tất cả" else batch)
+        route_figure.axes[0].set_title(f"Lộ trình chuyến {batch}" if batch != "Tất cả"
+                                      else "Lộ trình lấy hàng của các nhân viên")
+        figure(route_figure)
         st.caption("Ô vuông là điểm xuất phát. Số trên tuyến là thứ tự lấy hàng của chuyến đang chọn.")
         if batch != "Tất cả":
             chosen = next(b for b in batches if b["id"] == batch)
@@ -159,41 +162,14 @@ def route_view(instance, result):
                 stops = chosen["stops"][1:-1]
                 st.dataframe(pd.DataFrame({"Thứ tự": range(1, len(stops) + 1), "Vị trí": stops}),
                              hide_index=True, width="stretch")
-                st.caption("Bảng giúp đọc thứ tự trên màn hình nhỏ. Chuyến bắt đầu và kết thúc tại depot.")
+                st.caption("Mỗi chuyến bắt đầu và kết thúc tại điểm xuất phát.")
     else:
         st.info("Nhân viên này không có chuyến được phân công.")
     st.subheader("Lịch làm việc")
-    figure(gantt_figure(instance, result))
+    schedule_figure = gantt_figure(instance, result)
+    schedule_figure.axes[0].set_title("Lịch làm việc của các nhân viên")
+    figure(schedule_figure)
     st.caption("Màu nhân viên nhất quán với bản đồ. Viền đỏ đánh dấu chuyến có đơn trễ.")
-
-
-def research_view(instance, results, result):
-    with st.expander("Phân tích thuật toán", expanded=False):
-        st.write(f"**Điểm tổng hợp F: {result['metrics']['objective']:.4f}** · Thấp hơn là tốt hơn trên cùng dữ liệu và trọng số.")
-        weights = result["objective_config"]["weights"]
-        st.caption(f"Trọng số quãng đường / hoàn tất / tổng trễ: "
-                   f"{weights[0]:.3f} / {weights[1]:.3f} / {weights[2]:.3f}.")
-        columns = {"method": "Thuật toán", "objective": "Điểm F", "distance": f"Quãng đường ({unit_label(instance, 'distance')})",
-                   "makespan": f"Hoàn tất ({unit_label(instance, 'time')})",
-                   "tardiness": f"Tổng độ trễ ({unit_label(instance, 'time')})", "late_orders": "Đơn trễ",
-                   "seconds": "Thời gian chạy (giây)"}
-        rows = [{"method": m, **{k: r["metrics"][k] for k in columns if k not in ("method", "seconds")},
-                 "seconds": r["timing"]["total_seconds"]} for m, r in results.items()]
-        st.dataframe(pd.DataFrame(rows).rename(columns=columns), hide_index=True, width="stretch")
-        fig, ax = plt.subplots(figsize=(8, 3), layout="constrained")
-        for method, data in results.items():
-            trace = data.get("search", {}).get("trace", [])
-            if trace:
-                ax.step([p["seconds"] for p in trace], [p["objective"] for p in trace], where="post", label=method)
-        if ax.lines:
-            ax.set(xlabel="Thời gian tối ưu, gồm khởi tạo (giây)", ylabel="Điểm F tốt nhất")
-            ax.legend(frameon=False)
-            ax.grid(alpha=.15)
-            figure(fig)
-        else:
-            plt.close(fig)
-        st.caption("F cân bằng quãng đường, thời gian hoàn tất và độ trễ; không bảo đảm mọi chỉ số đều giảm.")
-        st.json(result.get("search", {}), expanded=False)
 
 
 def results_view(snapshot):
@@ -205,19 +181,22 @@ def results_view(snapshot):
         st.caption("Quy ước demo Kris: 10 đơn vị khoảng cách = 1 m; 30 đơn vị thời gian = 1 giây.")
     elif instance.metadata.get("source_kind") == "author_benchmark":
         st.caption("Dữ liệu tác giả giữ đơn vị nguồn. Chưa có hệ số được xác nhận để đổi sang mét hoặc giây/phút.")
-    st.caption(f"Lần chạy: {instance.name} · Seed {snapshot.get('seed', 'không lưu')} · "
-               f"{'Bản lưu' if snapshot.get('saved_playback') else 'Kết quả trực tiếp'}")
-    instance_summary(instance)
+    scenario = instance.metadata.get("scenario", {})
+    scenario_id = scenario.get("id") if isinstance(scenario, dict) else None
+    map_name = MAP_LABELS.get(scenario_id, instance.name) if isinstance(scenario_id, str) else instance.name
+    st.caption(f"{map_name} · {len(instance.orders)} đơn · {instance.operations.pickers} nhân viên · "
+               f"seed {snapshot.get('seed', 'không lưu')}" + (" · Bản lưu" if snapshot.get("saved_playback") else ""))
     names = list(results)
     if st.session_state.get("result_method") not in names:
         st.session_state["result_method"] = "ALNS" if "ALNS" in names else names[0]
-    selected = st.selectbox("Phương án đang xem", names, key="result_method")
+    method_column, export_column = st.columns([3, 2], vertical_alignment="bottom")
+    selected = method_column.selectbox("Phương án đang xem", names, key="result_method")
     result = results[selected]
-    with st.expander("Tải kết quả", expanded=False):
+    with export_column.expander("Tải kết quả", expanded=False):
         for label, data, filename in [
-            ("Tải nghiệm JSON (gốc)", raw_snapshot['results'][selected], f"{selected}-solution.json"),
-            ("Tải dữ liệu đầu vào (gốc)", raw_snapshot['instance'], "warehouse-instance.json"),
-            ("Tải toàn bộ lần chạy (gốc)", raw_snapshot, "warehouse-snapshot.json"),
+            ("Tải phương án (JSON)", raw_snapshot['results'][selected], f"{selected}-solution.json"),
+            ("Tải dữ liệu đầu vào (JSON)", raw_snapshot['instance'], "warehouse-instance.json"),
+            ("Tải toàn bộ lần chạy (JSON)", raw_snapshot, "warehouse-snapshot.json"),
         ]:
             st.download_button(label, json.dumps(data, ensure_ascii=False, indent=2),
                                file_name=filename, mime="application/json", key=filename)
@@ -236,11 +215,10 @@ def results_view(snapshot):
         col2.metric("Thời gian hoàn tất", time_display,
                     delta="Không quy đổi đơn vị nguồn", delta_color="off")
         col3.metric("Quãng đường", f"{metrics['distance']:,.1f} {distance_unit}")
-    sim_tab, overview, routes, details = st.tabs(["🎮 Mô phỏng động", "Tổng quan", "Tuyến & lịch", "Chi tiết"])
+    sim_tab, overview, routes, details, evaluation = st.tabs(["Mô phỏng", "Tổng quan", "Tuyến và lịch", "Chi tiết", "Đánh giá"])
     with sim_tab:
-        st.subheader("Mô phỏng phát lại nghiệm kho")
-        st.caption("Mỗi đơn có thể gồm nhiều sản phẩm. Tải xe là lượng đang chở; sức chứa là giới hạn mỗi chuyến.")
-        render_simulation(instance, result)
+        with st.container(key="simulation_canvas"):
+            render_simulation(instance, result, height=560)
     with overview:
         st.subheader("Kết quả của phương án")
         st.write(f"Đã phân công **{metrics['batches']} chuyến** cho **{metrics['used_pickers']} nhân viên**. "
@@ -252,12 +230,13 @@ def results_view(snapshot):
             else:
                 direction = "giảm" if pct >= 0 else "tăng"
                 st.write(f"Quãng đường {direction} **{abs(pct):.1f}%** so với phương án cơ sở B0.")
-        st.caption("Hạn mềm: phương án hợp lệ vẫn có thể có đơn trễ. Kết quả đã được kiểm tra tải, tuyến và lịch.")
+        st.caption("Bài toán cho phép giao trễ và tính độ trễ vào điểm F. Phương án đã được kiểm tra sức chứa, tuyến đi và lịch làm việc.")
         if time_scale is None:
             st.caption("Dữ liệu giữ nguyên đơn vị nguồn; chưa quy đổi sang giây/phút.")
-        research_view(instance, results, result)
     with routes:
         route_view(instance, result)
+    with evaluation:
+        current_run_view(raw_snapshot, selected)
     with details:
         late_only = st.checkbox("Chỉ xem đơn trễ", key="late_only")
         rows = [r for r in result["orders"] if not late_only or r["tardiness"] > 1e-9]

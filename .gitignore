@@ -111,6 +111,7 @@ data/raw/
 
 # Working documentation is kept local.
 /docs/**/*.md
+!/docs/EVALUATION.md
 
 # Academic graduation/coursework report (kept local, not pushed to GitHub)
 /report/

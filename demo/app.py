@@ -9,6 +9,7 @@ sys.path.insert(0, str(ROOT))
 import streamlit as st
 
 from demo.components import instance_summary, results_view, sidebar, style
+from demo.evaluation import BENCHMARK, SIMULATION, benchmark_workspace
 from demo.state import (
     fail_run,
     finish_run,
@@ -33,9 +34,19 @@ def prepared(draft, content):
     return prepare_instance(draft, ROOT, content).to_dict()
 
 
+# Keep draft controls and result filters when another workspace hides their widgets.
+for control in ("source", "scenario", "orders", "pickers", "capacity", "tightness", "seed", "budget",
+                "objective_profile", "comparison", "kris_file", "result_method", "route_picker", "route_batch",
+                "late_only", "objective_reference"):
+    if control in st.session_state:
+        st.session_state[control] = st.session_state[control]
+workspace = st.sidebar.radio("Chức năng", [SIMULATION, BENCHMARK], key="workspace", horizontal=True)
+if workspace == BENCHMARK:
+    benchmark_workspace(ROOT)
+    st.stop()
+
 draft, content = sidebar(ROOT, begin)
 st.title("Tối ưu lấy hàng")
-st.caption("Gom đơn thành chuyến · Chọn đường đi · Phân công nhân viên")
 
 if st.session_state.get("run_status") == "running":
     progress = st.progress(0, text="Đang kiểm tra dữ liệu...")
@@ -61,21 +72,19 @@ if saved.is_file():
                 fail_run(st.session_state, exc)
 
 if st.session_state.get("run_status") == "error":
-    st.error(f"Không thể chạy: {st.session_state['run_error']}")
+    st.error("Không thể chạy thuật toán. Hãy kiểm tra dữ liệu và thông số đã chọn.")
+    with st.expander("Chi tiết lỗi", expanded=False):
+        st.code(st.session_state["run_error"], language=None)
 
 snapshot = st.session_state.get("snapshot")
 if snapshot:
     if is_stale(snapshot, draft):
-        st.info("Đang xem kết quả của cấu hình đã lưu. Cấu hình bên trái chưa được áp dụng; bấm Chạy tối ưu để chạy lại.")
+        st.info("Cấu hình bên trái chưa được áp dụng. Bấm Chạy tối ưu để cập nhật.")
     results_view(snapshot)
 else:
-    st.subheader("Sẵn sàng cho lần chạy đầu tiên")
     try:
         instance = Instance.from_dict(prepared(draft, content))
         instance_summary(instance)
     except (OSError, ValueError, KeyError, TypeError):
         st.write("Chọn dữ liệu trong thanh bên để bắt đầu.")
-    st.write("**1. Chọn dữ liệu** — dùng mẫu có sẵn hoặc nhập kho của bạn.")
-    st.write("**2. Chạy tối ưu** — ứng dụng tự gom chuyến và phân công.")
-    st.write("**3. Xem phương án** — kiểm tra đơn trễ, tuyến đi và tải kết quả.")
-    st.button("Chạy với cấu hình này", type="secondary", key="run_main", on_click=begin)
+    st.caption("Chọn dữ liệu ở thanh bên rồi bấm Chạy tối ưu.")

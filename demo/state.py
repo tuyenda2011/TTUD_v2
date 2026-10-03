@@ -21,7 +21,7 @@ def prepare_instance(draft, root, content=None):
     if draft["source"] == SYNTHETIC:
         scenario_key = draft.get("scenario", "single_block")
         if scenario_key not in MAP_SCENARIOS:
-            raise InputError(f"Unknown scenario {scenario_key}; choose {tuple(MAP_SCENARIOS)}")
+            raise InputError(f"Kịch bản kho '{scenario_key}' không tồn tại. Hãy chọn một kịch bản có sẵn.")
         scen_cfg = MAP_SCENARIOS[scenario_key]
         return generate_scenario(
             scenario_key,
@@ -33,7 +33,7 @@ def prepare_instance(draft, root, content=None):
         )
     if draft["source"] == KRIS:
         if not draft.get("file"):
-            raise InputError("Chưa có dữ liệu Kris. Chọn dữ liệu tổng hợp hoặc chuẩn bị catalog Kris.")
+            raise InputError("Chưa có dữ liệu Kris. Hãy chọn dữ liệu mô phỏng hoặc chuẩn bị bộ dữ liệu Kris trước.")
         path = (root / draft["file"]).resolve()
         if not path.is_relative_to((root / "data/processed").resolve()):
             raise InputError("Đường dẫn Kris không hợp lệ.")

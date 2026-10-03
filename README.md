@@ -1,317 +1,314 @@
-# Warehouse Joint Optimizer
+# Warehouse Joint Optimizer — Tối ưu lấy hàng trong kho
 
-Hệ thống tối ưu hóa đồng thời **gom đơn hàng, định tuyến và lập lịch lấy hàng cho nhiều nhân viên** trong kho (*Joint Order Batching, Picker Routing and Picker Scheduling — JOBPRSP*).
+Đồ án môn **Thuật toán ứng dụng**, giải bài toán kết hợp **gom đơn hàng thành chuyến, tìm đường lấy hàng và phân công chuyến cho nhiều nhân viên**.
 
-Dự án được phát triển cho môn **Thuật toán ứng dụng (TTUD)**, cung cấp bộ giải bằng Python, giao diện mô phỏng Streamlit và pipeline thực nghiệm có thể kiểm chứng. Mô hình sử dụng **hạn giao mềm**: đơn hàng được phép trễ, với độ trễ được đưa vào hàm mục tiêu.
+Dự án có bộ giải Python, giao diện mô phỏng Streamlit và benchmark dùng chung cho phần đánh giá trên demo, slide thuyết trình và báo cáo. Kết quả benchmark được lưu để xuất lại bảng, hình hoặc mở trên máy khác.
 
-**Python ≥ 3.10** · **Streamlit** · **B0–B3 / LNS / ALNS / VNS / Exact**
+**Python từ 3.10** · **Streamlit** · **B0, B2, LNS, ALNS, VNS**
 
-## Mục lục
+## 1. Cài đặt và mở demo
 
-- [Cài đặt và khởi chạy](#cài-đặt-và-khởi-chạy)
-- [Chức năng chính](#chức-năng-chính)
-- [Sử dụng demo](#sử-dụng-demo)
-- [Sử dụng CLI](#sử-dụng-cli)
-- [Mô hình và thuật toán](#mô-hình-và-thuật-toán)
-- [Dữ liệu và kịch bản kho](#dữ-liệu-và-kịch-bản-kho)
-- [Thực nghiệm và báo cáo](#thực-nghiệm-và-báo-cáo)
-- [Kiểm thử và kiểm chứng](#kiểm-thử-và-kiểm-chứng)
-- [Cấu trúc dự án](#cấu-trúc-dự-án)
-- [Tài liệu và đóng góp](#tài-liệu-và-đóng-góp)
+Mở terminal tại thư mục gốc của dự án, nơi có `README.md` và `pyproject.toml`, rồi chạy các lệnh bên dưới.
 
-## Cài đặt và khởi chạy
+### Dùng môi trường Conda TTUD có sẵn
 
-Tải hoặc clone repository, sau đó mở terminal tại thư mục gốc chứa `README.md` và `pyproject.toml`.
-
-### Windows — PowerShell
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m streamlit run demo/app.py
-```
-
-Các lệnh trên gọi trực tiếp Python trong môi trường ảo. Với những lệnh `python` ở các phần sau, hãy dùng `.\.venv\Scripts\python.exe` hoặc kích hoạt môi trường bằng `.\.venv\Scripts\Activate.ps1`.
-
-### Linux / macOS
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-python -m streamlit run demo/app.py
-```
-
-### Môi trường Conda có sẵn
-
-Nếu đã có môi trường `TTUD`, chạy trong Anaconda Prompt hoặc terminal đã cấu hình Conda:
-
-```text
+```console
 conda activate TTUD
 python -m pip install -r requirements.txt
 python -m streamlit run demo/app.py
 ```
 
-Mở [http://localhost:8501](http://localhost:8501) để sử dụng demo. Dữ liệu tổng hợp được sinh trực tiếp, nên có thể chạy thử ngay mà không cần tải benchmark gốc.
+### Tạo môi trường mới trên Windows
 
-Phần thuật toán và CLI chỉ dùng thư viện chuẩn Python. `requirements.txt` bổ sung Streamlit, Matplotlib, pandas và pytest để chạy giao diện, vẽ biểu đồ và kiểm thử. Chi tiết phiên bản nằm trong [requirements.txt](requirements.txt) và [pyproject.toml](pyproject.toml).
+```console
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m streamlit run demo/app.py
+```
 
-## Chức năng chính
+Nếu dùng môi trường `.venv`, thay `python` trong các lệnh bên dưới bằng `.\.venv\Scripts\python.exe`.
 
-- **Tối ưu tích hợp:** quyết định cách gom đơn vào chuyến, tuyến lấy hàng và thứ tự chuyến của từng nhân viên.
-- **So sánh thuật toán:** các baseline B0–B3, LNS, ALNS, VNS và bộ giải exact cho bài toán nhỏ.
-- **Điều chỉnh mục tiêu:** cân bằng ba tiêu chí hoặc ưu tiên quãng đường, thời gian hoàn tất hay tổng độ trễ.
-- **Mô phỏng nghiệm:** phát lại đường đi trên đồ thị kho, điểm lấy hàng và tải trọng; hỗ trợ tua, đổi tốc độ, zoom, pan và lọc nhân viên.
-- **Kiểm định độc lập:** kiểm tra phân công đơn, sức chứa, đường đi vật lý, thời gian và các chỉ tiêu của nghiệm xuất ra.
-- **Thực nghiệm có truy vết:** lưu nghiệm thô, seed, cấu hình, manifest, bảng so sánh và biểu đồ; kiểm tra lại kết quả từ dữ liệu đã lưu.
+Trên Linux/macOS, tạo môi trường bằng `python3 -m venv .venv`, kích hoạt bằng `source .venv/bin/activate`, rồi chạy các lệnh `pip` và `streamlit` ở trên.
 
-## Sử dụng demo
+Demo mặc định mở tại [localhost:8501](http://localhost:8501). Có thể chọn cổng khác:
 
-1. **Chọn nguồn dữ liệu** ở thanh bên: dữ liệu tổng hợp, catalog Kris hoặc file instance JSON tải lên.
-2. **Thiết lập bài toán:** với dữ liệu tổng hợp, chọn kịch bản kho, số đơn, số nhân viên và sức chứa mỗi chuyến.
-3. **Điều chỉnh mục Nâng cao:** chọn seed, độ nới hạn, ngân sách tìm kiếm và ưu tiên tối ưu. Bật so sánh nếu cần chạy đủ `B0/B2/LNS/ALNS/VNS`; mặc định demo chạy B0 và ALNS.
-4. **Chọn Chạy tối ưu**, sau đó xem kết quả và tải dữ liệu.
+```console
+python -m streamlit run demo/app.py --server.port 8517
+```
 
-| Tab | Nội dung |
+Phần giải bài toán và kiểm định nghiệm dùng thư viện chuẩn Python. [requirements.txt](requirements.txt) bổ sung thư viện cho giao diện, biểu đồ và kiểm thử. Dữ liệu mô phỏng được sinh trực tiếp nên có thể mở demo ngay.
+
+## 2. Sử dụng giao diện demo
+
+Mục **Chức năng** ở thanh bên có hai lựa chọn: **Mô phỏng** và **Đánh giá benchmark**.
+
+### Mô phỏng
+
+1. Chọn **Dữ liệu mô phỏng**, **Bộ dữ liệu Kris** hoặc **Tải dữ liệu JSON**.
+2. Với dữ liệu mô phỏng, chọn bản đồ, số đơn, số nhân viên và sức chứa mỗi chuyến.
+3. Trong **Nâng cao**, điều chỉnh seed, thời gian tìm kiếm và tiêu chí ưu tiên. Bật **So sánh cả 5 thuật toán** nếu muốn so sánh B0, B2, LNS, ALNS và VNS; mặc định chạy B0 và ALNS.
+4. Bấm **Chạy tối ưu** để xem kết quả.
+
+| Tab kết quả | Nội dung |
 |---|---|
-| Mô phỏng động | Phát lại tuyến đi và hoạt động lấy hàng của từng nhân viên. |
-| Tổng quan | Quãng đường, thời gian hoàn tất, số đơn trễ, bảng so sánh và hội tụ hàm mục tiêu. |
-| Tuyến & lịch | Tuyến từng chuyến và lịch làm việc của các nhân viên. |
+| Mô phỏng | Phát lại đường đi và hoạt động lấy hàng; đổi tốc độ, tua và chọn nhân viên. |
+| Tổng quan | Quãng đường, thời gian hoàn tất, số đơn trễ và điểm mục tiêu. |
+| Tuyến và lịch | Đường đi từng chuyến và lịch làm việc của nhân viên. |
 | Chi tiết | Thông tin chuyến, đơn hàng và hàng hóa. |
+| Đánh giá | So sánh thuật toán trên dữ liệu của lần chạy hiện tại, xem hội tụ và tải bảng/hình. |
 
-Có thể tải nghiệm JSON, dữ liệu đầu vào hoặc snapshot toàn bộ lần chạy. Khi đổi tham số hay ưu tiên mục tiêu, cần chạy lại để nhận kết quả theo cấu hình mới. Ngân sách tìm kiếm được áp dụng riêng cho từng thuật toán.
+Khi đổi cấu hình, bấm chạy lại để áp dụng. Tab **Đánh giá** ở đây phản ánh một lần chạy minh họa; kết quả thực nghiệm nhiều bài toán và seed nằm ở mục **Đánh giá benchmark**.
 
-### Quy ước đơn vị hiển thị
+### Đánh giá benchmark
 
-Dữ liệu tổng hợp khai báo khoảng cách bằng mét và thời gian bằng phút. Với Kris, demo áp dụng quy ước dự án **10 đơn vị khoảng cách = 1 m** và **30 đơn vị thời gian = 1 giây**, được ghi trên giao diện; hệ số này chưa được tác giả benchmark xác nhận là quy đổi vật lý.
+Phần này mở được ngay cả khi chưa chạy mô phỏng:
 
-JSON tải lên được hiển thị theo đơn vị đã khai báo; đơn vị thời gian chưa biết giữ nguyên giá trị và nhãn. Số sản phẩm tính theo quantity, còn tải trọng tính theo `size × quantity`. Thời gian chạy thuật toán được báo riêng bằng giây. Quy đổi hiển thị giữ nguyên dữ liệu xuất JSON, điểm mục tiêu, số đơn trễ và kết quả benchmark.
+1. Chọn **Đánh giá benchmark** trong **Chức năng**.
+2. Tải tệp `report/evaluation.json` của một đợt benchmark lên, hoặc chọn **Báo cáo trên máy** nếu đã có kết quả trong `results/`.
+3. Chọn **Nhóm dữ liệu** và **Thuật toán đối chứng** để xem bảng so sánh.
+4. Trong tab **Biểu đồ**, chọn **Dùng cho → Báo cáo / Slide**, rồi chọn hình muốn xem. Có thể tải từng hình PNG và bảng CSV.
 
-## Sử dụng CLI
+Gói `evaluation.json` chứa dữ liệu đầu vào và nghiệm để demo kiểm tra, tính lại các bảng. Chỉ cần mang tệp này sang máy khác; không cần sao chép thư mục dữ liệu gốc hoặc chạy lại thuật toán.
 
-Chạy các lệnh dưới đây từ thư mục gốc bằng Python của môi trường đã cài đặt.
+## 3. Chạy benchmark
 
-### Sinh dữ liệu, giải và kiểm tra nghiệm
+Cấu hình thống nhất nằm trong [configs/benchmark.json](configs/benchmark.json). Cả năm thuật toán chạy trên cùng dữ liệu và trọng số. B0 và B2 chạy một lần cho mỗi bài toán; LNS, ALNS và VNS chạy qua nhiều seed ngẫu nhiên.
 
-```text
-python -m src generate --scenario double_block --orders 20 --pickers 4 --capacity 30 --seed 42 --output data/synthetic/my_run.json
-python -m src solve data/synthetic/my_run.json --method ALNS --seconds 5 --iterations 100000 --seed 42 --output results/my_solution.json
-python -m src validate data/synthetic/my_run.json results/my_solution.json
+| Nhóm | Dữ liệu | Câu hỏi đánh giá |
+|---|---|---|
+| `maps` | Kho chuẩn, kho 2 khối, kho lớn, hạn giao gấp và phân khu ABC | Các thuật toán xử lý từng tình huống kho ra sao? |
+| `scalability` | Dữ liệu tổng hợp, thay số đơn và giữ cấu hình kho, nhân viên, sức chứa cùng quy tắc sinh hạn | Chất lượng nghiệm và thời gian tính toán thay đổi thế nào theo quy mô? |
+| `kris` | 18 bài toán Kris Small, gồm các nhóm 6, 12 và 18 đơn | Kết quả trên dữ liệu từ nguồn ngoài như thế nào? |
+
+Năm bản đồ có điều kiện khác nhau nên không dùng riêng nhóm `maps` để kết luận ảnh hưởng của số đơn. Thí nghiệm quy mô dùng nhóm `scalability`.
+
+### Chạy thử nhanh
+
+```console
+python -m src benchmark --config configs/benchmark.json --preset quick --groups maps scalability --output results/benchmark_quick_01 --presentation
 ```
 
-Lệnh `validate` tính lại các ràng buộc và chỉ tiêu từ nghiệm đã lưu. Vì bài toán dùng hạn mềm, một nghiệm hợp lệ vẫn có thể chứa đơn trễ.
+Với cấu hình hiện tại, lệnh này chạy **7 bài toán, 56 lượt giải**. Mỗi thuật toán tìm kiếm dùng 2 seed, tối đa 0,15 giây hoặc 30 vòng. Quick dùng để kiểm tra luồng chạy, bảng và hình trước khi chạy đầy đủ.
 
-### Chọn ưu tiên tối ưu
+### Chạy đầy đủ cho báo cáo và slide
 
-```text
-python -m src solve data/synthetic/my_run.json --method VNS --profile tardiness --seconds 3 --iterations 100000 --output results/tardiness.json
+```console
+python -m src benchmark --config configs/benchmark.json --preset report --groups maps scalability kris --output results/benchmark_report_02 --presentation
 ```
 
-| Profile | Ý nghĩa | Trọng số: quãng đường / makespan / tổng trễ |
+Với cấu hình hiện tại, Report chạy **45 bài toán, 1.440 lượt giải**:
+
+| Nhóm | Số bài toán | Số lượt giải |
+|---|---:|---:|
+| `maps` | 15 | 480 |
+| `scalability` | 12 | 384 |
+| `kris` | 18 | 576 |
+
+Mỗi thuật toán tìm kiếm dùng 10 seed, tối đa 3 giây hoặc 100.000 vòng. Ngân sách này áp dụng riêng cho từng lượt, gồm khởi tạo và tìm kiếm. Thời gian toàn đợt còn có tiền xử lý, kiểm định và xuất hình; một bước đang xử lý có thể khiến lượt chạy vượt ngân sách.
+
+Nhóm `kris` cần [catalog](data/processed/kris_small/catalog.json) và các JSON được liệt kê trong đó. Nếu thiếu dữ liệu, chuẩn bị theo [hướng dẫn dữ liệu](data/README.md), hoặc chạy riêng `--groups maps scalability`. Khi đã chọn rõ `kris`, thiếu dữ liệu sẽ được báo trước khi giải.
+
+### Kiểm tra cấu hình trước khi chạy
+
+```console
+python -m src benchmark --config configs/benchmark.json --preset report --groups maps scalability kris --dry-run
+```
+
+`--dry-run` kiểm tra dữ liệu và in số bài toán, số lượt giải; không chạy thuật toán và không ghi kết quả.
+
+### Tiếp tục đợt bị ngắt
+
+Giữ nguyên lệnh, cấu hình, dữ liệu và phiên bản mã nguồn; thêm `--resume`:
+
+```console
+python -m src benchmark --config configs/benchmark.json --preset report --groups maps scalability kris --output results/benchmark_report_02 --resume --presentation
+```
+
+Runner dùng lại **nhóm đã hoàn thành và qua kiểm định**. Nhóm chạy dở được chạy lại từ đầu, còn dữ liệu dở dang được giữ trong `_attempts/`. Đây là cách tiếp tục theo nhóm dữ liệu, không tiếp tục từng lượt hoặc từng vòng tìm kiếm.
+
+Thư mục đầu ra của đợt mới phải mới hoặc rỗng; đổi hậu tố `01`, `02`, … cho mỗi đợt. Giữ nguyên thư mục kết quả trong lúc chạy. Sau khi sửa mã nguồn, dữ liệu hoặc cấu hình, tạo đợt mới để các kết quả cùng một phiên bản.
+
+### Xuất lại hình từ kết quả đã lưu
+
+```console
+python -m src report --input results/benchmark_report_02 --output results/benchmark_png_02/report --presentation
+```
+
+Lệnh `report` kiểm tra bằng chứng rồi xuất lại bảng và hình, **không chạy lại thuật toán**. Đầu vào có thể là thư mục benchmark đã hoàn thành hoặc tệp `evaluation.json`; đầu ra phải là thư mục mới hoặc rỗng.
+
+Dùng lệnh này khi muốn cập nhật cách trình bày hình, hoặc bổ sung bộ ảnh slide cho đợt đã chạy xong. `--resume` của đợt hoàn chỉnh giữ báo cáo đã có.
+
+| Tùy chọn | Tác dụng |
+|---|---|
+| `--preset quick` / `--preset report` | Chọn chạy thử hoặc chạy đầy đủ. |
+| `--groups maps scalability kris` | Chọn nhóm dữ liệu; có thể chỉ truyền một hoặc hai nhóm. |
+| `--presentation` | Tạo thêm bộ PNG cho slide, khung 16:9 và chữ lớn. |
+| `--no-charts` | Xuất bảng CSV, JSON và tài liệu, bỏ bước vẽ ảnh. |
+| `--dry-run` | Kiểm tra và đếm lượt trước khi chạy benchmark. |
+| `--resume` | Dùng lại các nhóm đã hoàn thành của đợt bị ngắt. |
+
+Đổi seed, trọng số hoặc ngân sách tìm kiếm trong `configs/benchmark.json`; lệnh benchmark không có tham số `--seconds` riêng.
+
+## 4. Lấy bảng và ảnh cho báo cáo, slide
+
+Sau khi benchmark hoàn thành, kết quả có cấu trúc:
+
+```text
+results/benchmark_report_02/
+├── config.json
+├── preregistered.json
+├── manifest.json
+├── evaluation.json
+├── datasets/
+│   ├── maps/
+│   ├── scalability/
+│   └── kris/
+└── report/
+    ├── index.html
+    ├── REPORT.md
+    ├── summary.csv
+    ├── per_instance.csv
+    ├── raw_metrics.csv
+    ├── evaluation.json
+    ├── availability.json
+    ├── figures_report/
+    │   ├── 01_maps/
+    │   ├── 02_scalability/
+    │   └── 03_kris/
+    └── figures_presentation/
+        ├── 01_maps/
+        ├── 02_scalability/
+        └── 03_kris/
+```
+
+Ví dụ trên chọn đủ ba nhóm và bật `--presentation`. Mở **`report/index.html`** bằng trình duyệt để xem ảnh thu nhỏ, đọc chú thích và chọn hình; trang dùng được khi không có mạng.
+
+| Cần dùng | Lấy ở đâu |
+|---|---|
+| Bảng tổng hợp so sánh thuật toán và đối chứng B0/B2 | `summary.csv` |
+| Trung bình và độ lệch chuẩn theo từng bài toán, thuật toán | `per_instance.csv` |
+| Chỉ tiêu của từng lượt giải | `raw_metrics.csv` |
+| Ảnh chèn vào báo cáo | `figures_report/` |
+| Ảnh chèn vào slide | `figures_presentation/` |
+| Gói tải lên demo | `evaluation.json` |
+| Cách đọc kết quả và liên kết hình | `REPORT.md` |
+
+**Ảnh xuất ra chỉ có PNG, 300 dpi, mỗi ảnh một biểu đồ.** Bộ slide dùng khung 16:9; lệnh không tạo tệp PowerPoint. Cả hai bộ dùng cùng số liệu và màu thuật toán.
+
+Có năm nhóm hình: **chất lượng F**, **các chỉ số thành phần**, **độ ổn định**, **hội tụ** và **ảnh hưởng của quy mô**. Một nhóm có thể tạo nhiều ảnh: ba chỉ số thành phần được tách riêng, hình chất lượng chia trang và các bài toán minh họa có hình riêng. Nếu thiếu dữ liệu hoặc điều kiện thí nghiệm chưa phù hợp, lý do nằm trong danh mục và `availability.json`.
+
+Các bảng lấy trung bình qua seed trên từng bài toán trước khi tổng hợp theo nhóm. Độ lệch chuẩn mô tả dao động, không thay cho kiểm định ý nghĩa thống kê. Chi tiết cách tính và điều kiện vẽ hình nằm trong [docs/EVALUATION.md](docs/EVALUATION.md).
+
+## 5. Giải một bài toán bằng dòng lệnh
+
+Sinh dữ liệu, giải bằng ALNS rồi kiểm tra nghiệm:
+
+```console
+python -m src generate --scenario double_block --orders 20 --pickers 4 --capacity 30 --seed 42 --output data/synthetic/example.json
+python -m src solve data/synthetic/example.json --method ALNS --seconds 3 --iterations 100000 --seed 42 --output results/example/solution.json
+python -m src validate data/synthetic/example.json results/example/solution.json
+```
+
+Chọn tiêu chí ưu tiên bằng `--profile`:
+
+| Giá trị | Ưu tiên | Trọng số: quãng đường / thời gian hoàn tất / tổng độ trễ |
 |---|---|---|
 | `balanced` | Cân bằng, mặc định | 1/3 · 1/3 · 1/3 |
-| `distance` | Ưu tiên giảm quãng đường | 0.6 · 0.2 · 0.2 |
-| `makespan` | Ưu tiên hoàn tất sớm | 0.2 · 0.6 · 0.2 |
-| `tardiness` | Ưu tiên giảm tổng độ trễ | 0.2 · 0.2 · 0.6 |
+| `distance` | Quãng đường | 0,6 · 0,2 · 0,2 |
+| `makespan` | Thời gian hoàn tất | 0,2 · 0,6 · 0,2 |
+| `tardiness` | Tổng độ trễ | 0,2 · 0,2 · 0,6 |
 
-Có thể thay `--profile` bằng `--weights 0.5 0.3 0.2`. Ba trọng số phải dương, hữu hạn và có tổng bằng 1. Tìm kiếm dừng khi đạt giới hạn thời gian hoặc số vòng; `solve` mặc định có trần 200 vòng nếu không truyền `--iterations`.
+Có thể dùng `--weights 0.5 0.3 0.2` thay cho `--profile`. Ba trọng số phải dương, hữu hạn và có tổng bằng 1. Lệnh `solve` mặc định giới hạn 200 vòng; truyền `--iterations` nếu muốn dùng ngân sách thời gian dài hơn.
 
-### Giải exact cho instance nhỏ
+Với dữ liệu nhỏ, dùng bộ giải exact:
 
-```text
-python -m src exact data/synthetic/tiny_4.json --profile balanced --output results/tiny_exact.json
+```console
+python -m src exact data/synthetic/tiny_4.json --output results/example/exact.json
 ```
 
-Bộ giải joint exact giới hạn **tối đa 6 đơn và 8 vị trí SKU ngoài depot**. Chỉ diễn giải optimality gap khi `certified_optimal=true` và hai nghiệm dùng cùng instance, trọng số và chuẩn hóa mục tiêu.
+Exact giới hạn tối đa 6 đơn và 8 vị trí hàng ngoài điểm xuất phát. Chỉ xem nghiệm là được chứng nhận tối ưu khi kết quả có `certified_optimal=true`.
 
 Tra cứu đầy đủ tham số:
 
-```text
+```console
 python -m src --help
 python -m src solve --help
+python -m src benchmark --help
+python -m src report --help
 ```
 
-## Mô hình và thuật toán
+## 6. Mô hình và thuật toán
 
-Mỗi đơn được đưa vào đúng một chuyến; tải của chuyến không vượt sức chứa. Mỗi chuyến bắt đầu và kết thúc tại depot, đi trên đồ thị kho vô hướng có trọng số không âm. Các đơn cùng chuyến hoàn thành khi nhân viên trở về depot.
+Mỗi đơn thuộc đúng một chuyến, tải trọng chuyến không vượt sức chứa. Chuyến bắt đầu và kết thúc tại điểm xuất phát, di chuyển trên đồ thị kho. Nhân viên thực hiện các chuyến lần lượt; các đơn trong chuyến hoàn thành khi nhân viên trở về.
 
-Hàm mục tiêu là tổng có trọng số của ba chỉ tiêu đã chuẩn hóa:
+Điểm **F** là tổng có trọng số của **quãng đường**, **thời gian hoàn tất toàn bộ công việc** và **tổng độ trễ**, sau khi chuẩn hóa theo B0. **F càng nhỏ càng tốt** khi so trên cùng bài toán và trọng số. Mô hình dùng hạn giao mềm: đơn có thể trễ nhưng độ trễ được tính vào mục tiêu. Giảm tổng độ trễ không bảo đảm giảm số đơn trễ.
 
-$$
-\min F = w_D\frac{D}{D_{ref}} + w_C\frac{C_{max}}{C_{ref}} + w_T\frac{T}{T_{ref}}
-$$
+Chuẩn tham chiếu là `D_ref = max(D_B0, 1)`, `C_ref = max(C_B0, 1)` và `T_ref = n × C_ref`, với `n` là số đơn.
 
-Trong đó `D` là tổng quãng đường, `C_max` là thời gian hoàn tất toàn bộ công việc và `T` là tổng độ trễ của các đơn. Các chuẩn tham chiếu lấy từ B0: `D_ref = max(D_B0, 1)`, `C_ref = max(C_B0, 1)`, `T_ref = n × C_ref`, với `n` là số đơn.
-
-| Phương pháp | Cách tiếp cận |
+| Thuật toán trong benchmark | Cách giải |
 |---|---|
-| B0 | Gom đơn theo thứ tự rank, định tuyến nearest neighbor và phân công chuyến theo thời điểm nhân viên rảnh. |
-| B1 | Gom đơn greedy theo khoảng cách tăng thêm, kết hợp nearest neighbor. |
-| B2 | Gom đơn greedy và cải thiện tuyến bằng 2-opt. |
-| B3 | Khởi tạo như B2, bổ sung tìm kiếm cục bộ để cải thiện nghiệm và lịch. |
-| LNS | Phá hủy một phần nghiệm và tái chèn đơn bằng các toán tử repair. |
-| ALNS | Khung LNS với xác suất chọn toán tử được điều chỉnh theo hiệu quả tìm kiếm. |
-| VNS | Thay đổi cấu trúc lân cận để tìm kiếm trên cách gom đơn và lịch nhân viên. |
-| Exact | Liệt kê phân hoạch đơn, phân công nhân viên và thứ tự chuyến; dùng tuyến exact cho mỗi chuyến. |
+| B0 | Gom đơn theo thứ tự `rank`, chọn đường bằng nearest neighbor; xếp chuyến theo hạn giao sớm nhất trong chuyến rồi giao cho nhân viên rảnh sớm nhất. |
+| B2 | Gom đơn tham lam và cải thiện đường đi bằng 2-opt. |
+| LNS | Bỏ một phần đơn khỏi nghiệm rồi chèn lại để tìm cách gom và phân công tốt hơn. |
+| ALNS | Dùng khung LNS, điều chỉnh xác suất chọn toán tử theo hiệu quả tìm kiếm. |
+| VNS | Thay đổi cấu trúc lân cận để cải thiện cách gom đơn và lịch nhân viên. |
 
-CLI còn hỗ trợ baseline S-Shape (`B-S`) và các biến thể ablation `ALNS_NO_SCHEDULE`, `ALNS_NO_2OPT`.
+CLI còn hỗ trợ các phương pháp bổ sung; xem `solve --help` và [ghi chú thuật toán](docs/ALGORITHM_NOTES.md).
 
-**Phạm vi mô hình:** mọi đơn có sẵn tại thời điểm 0, nhân viên đồng nhất; chưa mô hình hóa đơn phát sinh động, xung đột lối đi hay ca nghỉ. Số đơn trễ là chỉ tiêu báo cáo riêng, không phải thành phần trực tiếp của `F`. Giảm tổng trễ không bảo đảm giảm số đơn trễ; chỉ so điểm `F` khi dùng cùng instance và trọng số.
+Các đơn có sẵn từ thời điểm 0 và nhân viên đồng nhất. Mô hình hiện chưa xét đơn phát sinh trong lúc chạy, va chạm giữa nhân viên hoặc ca nghỉ. Dữ liệu Kris giữ đơn vị nguồn trong benchmark; quy đổi mét/thời gian của phần mô phỏng chỉ là quy ước hiển thị, không thay số liệu thực nghiệm. Xem [nguồn dữ liệu và giới hạn so sánh](data/README.md).
 
-Đọc [ghi chú thuật toán](ALGORITHM_NOTES.md) để xem bất biến, độ phức tạp, điều kiện chứng nhận exact và ví dụ tính tay.
-
-## Dữ liệu và kịch bản kho
-
-### Dữ liệu tổng hợp
-
-Năm kịch bản dùng trong demo được định nghĩa tại [src/generator.py](src/generator.py). Bảng sau ghi cấu hình mặc định; số đơn, số nhân viên và sức chứa có thể điều chỉnh.
-
-| Kịch bản | Bố trí | Số đơn | Nhân viên | Sức chứa/chuyến |
-|---|---|---:|---:|---:|
-| `single_block` | 5 dãy × 6 hàng, một khối | 10 | 3 | 20 |
-| `double_block` | 6 dãy × 8 hàng, một lối ngang giữa kho | 30 | 3 | 25 |
-| `mega_hub` | 10 dãy × 16 hàng, hai lối ngang giữa kho | 40 | 5 | 30 |
-| `rush_hour` | 6 dãy × 8 hàng, hạn giao gấp (`tightness=0.06`) | 25 | 4 | 20 |
-| `abc_zonal` | 6 dãy × 10 hàng, nhu cầu tập trung gần depot | 35 | 4 | 25 |
-
-`rush_hour` là instance tĩnh với deadline chặt. `abc_zonal` giả định khoảng 20% SKU gần depot chiếm 70% lượt chọn hàng, với độ gần tính trên đồ thị. Các kịch bản này phục vụ kiểm thử và nghiên cứu trên dữ liệu sinh nhân tạo.
-
-### Benchmark Kris
-
-Catalog của đồ án gồm **18 instance Kris Small**, với 6 file cho mỗi nhóm 6, 12 và 18 đơn. Danh sách cố định và quy tắc chọn được lưu trong [kris_selection.json](data/processed/kris_selection.json); demo và benchmark đọc [catalog.json](data/processed/kris_small/catalog.json).
-
-Bộ chuyển đổi giữ số lượng, thời hạn và tham số nguồn. Tuy nhiên, dự án nghiên cứu biến thể hạn mềm với hàm mục tiêu riêng, nên kết quả không được xem là tái lập điểm số hay nghiệm tối ưu của bài toán nguồn JOBPRSP-D.
-
-Xem [tài liệu dữ liệu](data/README.md) để tra cứu nguồn, định dạng, checksum và giới hạn chuyển đổi. Archive gốc trong `data/raw/` được giữ local; để tạo lại JSON từ dữ liệu gốc đã có, chạy `python scripts/prepare_kris.py`.
-
-## Thực nghiệm và báo cáo
-
-Mỗi đợt chạy cần một thư mục kết quả mới để giữ nguyên bằng chứng. Benchmark tổng quát chấp nhận thư mục mới hoặc rỗng; các runner map và Kris yêu cầu đường dẫn chưa tồn tại.
-
-### Kiểm tra nhanh pipeline
+## 7. Cấu trúc mã nguồn
 
 ```text
-python -m src benchmark --config configs/smoke.json --output results/benchmark_smoke_run
-python scripts/build_comparison_report.py --benchmark results/benchmark_smoke_run --output results/benchmark_smoke_report
+demo/
+  app.py                  # Khởi chạy giao diện
+  components.py           # Điều khiển và hiển thị kết quả mô phỏng
+  simulation.py           # Mô phỏng động
+  state.py                # Chuẩn bị dữ liệu và quản lý lần chạy
+  evaluation.py           # Đánh giá lần chạy và mở benchmark
+src/
+  cli.py                  # Các lệnh generate, solve, validate, exact, benchmark, report
+  generator.py            # Sinh dữ liệu và năm kịch bản kho
+  solver.py               # Điều phối các thuật toán
+  search.py               # LNS và ALNS
+  vns.py                  # VNS
+  exact.py                # Bộ giải exact cho bài toán nhỏ
+  evaluator.py            # Tính lịch và mục tiêu
+  validator.py            # Kiểm định nghiệm độc lập
+  experiment.py           # Chạy benchmark theo nhóm, khóa cấu hình và tiếp tục đợt bị ngắt
+  benchmark.py            # Chạy từng nhóm và lưu nghiệm gốc
+  evaluation.py           # Kiểm tra gói đánh giá và tổng hợp chỉ tiêu
+  evaluation_report.py    # Xuất CSV, JSON, PNG và danh mục hình
+  evaluation_figures.py   # Điểm gọi chung cho các biểu đồ
+  evaluation_charts/
+    quality.py            # Chất lượng F
+    components.py         # Các chỉ số thành phần
+    stability.py          # Độ ổn định
+    convergence.py        # Hội tụ
+    scalability.py        # Ảnh hưởng của quy mô
+    common.py             # Màu, nhãn và hàm dùng chung
+configs/                  # Cấu hình chạy
+data/                     # Dữ liệu đầu vào
+docs/                     # Tài liệu mô hình, thuật toán và đánh giá
+scripts/                  # Công cụ hỗ trợ và kiểm tra
+tests/                    # Kiểm thử
+results/                  # Kết quả sinh khi chạy, được Git bỏ qua
 ```
 
-Smoke dùng để kiểm tra pipeline và tạo bảng, biểu đồ mẫu. Số liệu nghiên cứu phải lấy từ cấu hình thực nghiệm tương ứng.
+Muốn sửa một nhóm biểu đồ, chỉnh file tương ứng trong `src/evaluation_charts/`. Sau đó dùng lệnh `report` để xuất hình từ kết quả đã lưu.
 
-### Benchmark năm kịch bản demo
+## 8. Kiểm thử và tài liệu
 
-```text
-python scripts/benchmark_maps.py --seconds 1.0 --search-seeds 1 --output results/map_quick_run
-```
-
-Để chạy cấu hình đầy đủ, bỏ `--seconds` và `--search-seeds`, đồng thời chọn output mới. [Cấu hình mặc định](configs/map_scenarios_benchmark.json) dùng seed dữ liệu 42 và 10 search seed: B0/B2 chạy một lần, LNS/ALNS/VNS chạy theo từng seed, tổng cộng **160 lượt chạy**.
-
-### Benchmark Kris
-
-```text
-python scripts/benchmark_kris.py --limit-per-size 1 --seconds 1.0 --output results/kris_quick_run
-```
-
-Để chạy toàn bộ catalog, bỏ `--limit-per-size` và chọn output mới. Với 18 instance, năm phương pháp và ba search seed mặc định, runner tạo **198 lượt chạy**.
-
-Cả hai runner tự xuất báo cáo và biểu đồ vào `<output>_report/`. Những tệp chính gồm:
-
-| Tệp | Nội dung |
-|---|---|
-| `REPORT.md` | Phạm vi dữ liệu, số lượt chạy và thông tin kiểm chứng. |
-| `comparison.csv` | Thắng/hòa/thua và mức cải thiện giữa các phương pháp. |
-| `comparison_pairs.csv` | So sánh từng cặp phương pháp trên từng instance. |
-| `per_instance.csv` | Thống kê theo instance và thuật toán. |
-| `raw_metrics.csv` | Chỉ tiêu từng lượt chạy sau kiểm định. |
-| `charts/` | Biểu đồ mục tiêu, thắng/hòa/thua và lịch nhân viên. |
-
-### Nghiên cứu chất lượng chương trình
-
-```text
-python scripts/run_research.py all --protocol configs/coursework_quality.json --output results/quality_new/study
-python scripts/analyze_quality.py --study results/quality_new/study --output results/quality_new/diagnostics
-```
-
-[Protocol chất lượng](configs/coursework_quality.json) tách seed tuning/holdout, kiểm tra 30/100/300 đơn trên hai layout và hai mức deadline, đồng thời có ablation, độ nhạy trọng số và exact nhỏ. Pipeline khóa dữ liệu và mã nguồn trước khi chạy; preset được chọn trên tuning rồi khóa trước holdout.
-
-Đợt nghiên cứu ngày 01/10/2026 ghi nhận **704 nghiệm nghiên cứu và 39 nghiệm diagnostics**. Trên tập holdout đã chạy, ALNS cải thiện `F` trung bình khoảng **26,41% so với B0** và **3,66% so với B2**; VNS đạt `F` tốt hơn ALNS. Xem [QUALITY_RESULTS.md](QUALITY_RESULTS.md) để đọc phương pháp thống kê, bằng chứng và giới hạn diễn giải.
-
-Ba kích thước dùng chung seed nhu cầu; suy luận thống kê dựa trên 12 nhóm seed trong bốn điều kiện. Các instance và search seed không được coi là những quan sát độc lập. Số đo bộ nhớ bằng `tracemalloc` chỉ phản ánh phần cấp phát Python được theo dõi.
-
-[research_completion.json](configs/research_completion.json) là protocol nghiên cứu riêng với 10 search seed. Có thể chạy bằng cùng lệnh `run_research.py all`, thay đường dẫn protocol và dùng output mới. Kết quả mỗi đợt gắn với phiên bản nguồn trong manifest.
-
-## Kiểm thử và kiểm chứng
-
-### Chạy test suite
-
-```text
+```console
 python -m pytest -q
 ```
 
-Các test bao phủ đồ thị và định tuyến, toán tử tìm kiếm, ràng buộc nghiệm, mục tiêu, adapter dữ liệu, pipeline thực nghiệm, trạng thái demo, đơn vị hiển thị và timeline mô phỏng.
+Các kiểm thử bao phủ thuật toán, ràng buộc nghiệm, dữ liệu, benchmark, xuất báo cáo, trạng thái demo và đơn vị hiển thị. Khi thay đổi thuật toán hoặc cách tính mục tiêu, chạy kiểm thử và tạo đợt benchmark mới.
 
-[Hồ sơ chất lượng](QUALITY_RESULTS.md) ghi nhận **229 test đạt, không skip** trong lần kiểm tra ngày 02/10/2026. Đây là kết quả của lần kiểm tra được ghi lại; số test có thể thay đổi khi mã nguồn được cập nhật.
+- [Mô hình và cách diễn giải kết quả](docs/MODEL_AND_DEFENSE.md)
+- [Thuật toán, bất biến và bộ giải exact](docs/ALGORITHM_NOTES.md)
+- [Quy tắc benchmark và đánh giá](docs/EVALUATION.md)
+- [Định dạng dữ liệu JSON](docs/SCHEMA.md)
+- [Nguồn dữ liệu Kris và giới hạn sử dụng](data/README.md)
 
-### Kiểm lại bằng chứng đã lưu
-
-Nếu workspace có đợt thực nghiệm tương ứng:
-
-```text
-python scripts/run_research.py verify --output results/coursework_quality_20261001/study
-python scripts/analyze_quality.py --verify --study results/coursework_quality_20261001/study --output results/coursework_quality_20261001/diagnostics
-```
-
-Chế độ audit kiểm snapshot nguồn lịch sử, dữ liệu và nghiệm thô, rồi tái tính bảng kết quả. Các lệnh kiểm chứng trên chỉ đọc bằng chứng. Muốn chạy tiếp một nghiên cứu, toàn bộ source phải khớp lock; khi source thay đổi, tạo đợt mới.
-
-Với gói nộp đã giải nén và cài dependencies:
-
-```text
-python scripts/verify_submission.py .
-python -m pytest -q
-python -m streamlit run demo/app.py
-```
-
-Validator và checksum xác nhận nghiệm phù hợp mô hình và tính toàn vẹn của tệp. Chứng nhận tối ưu chỉ có khi bộ giải exact duyệt hoàn tất không gian tìm kiếm.
-
-## Cấu trúc dự án
-
-```text
-TTUD_v2/
-├── demo/                    # Giao diện Streamlit và mô phỏng Canvas
-│   ├── app.py               # Điểm khởi chạy
-│   ├── components.py        # Điều khiển, bảng và biểu đồ
-│   ├── simulation.py        # Phát lại tuyến đi và hoạt động lấy hàng
-│   └── state.py             # Trạng thái và luồng chạy demo
-├── src/                     # Thuật toán, CLI và kiểm định
-│   ├── models.py            # Mô hình dữ liệu và đọc/ghi JSON
-│   ├── generator.py         # Sinh dữ liệu và kịch bản kho
-│   ├── graph.py             # Đồ thị và đường đi ngắn nhất
-│   ├── routing.py           # NN, 2-opt, S-Shape và tuyến exact
-│   ├── heuristics.py        # Gom đơn và phân công chuyến cơ sở
-│   ├── search.py            # LNS và ALNS
-│   ├── vns.py               # Variable Neighborhood Search
-│   ├── exact.py             # Joint exact cho instance nhỏ
-│   ├── evaluator.py         # Tính lịch và hàm mục tiêu
-│   ├── validator.py         # Kiểm định nghiệm độc lập
-│   ├── benchmark.py         # Chạy và tổng hợp thực nghiệm
-│   └── cli.py               # Giao diện dòng lệnh
-├── configs/                 # Cấu hình benchmark và protocol
-├── data/                    # Instance tổng hợp, Kris và metadata
-├── scripts/                 # Runner, báo cáo và đóng gói bằng chứng
-├── tests/                   # Test suite và kiểm thử hồi quy
-├── results/                 # Kết quả sinh khi chạy, được Git bỏ qua
-├── ALGORITHM_NOTES.md       # Mô hình, thuật toán và bất biến
-├── QUALITY_RESULTS.md       # Kết quả kiểm chứng và giới hạn
-├── pyproject.toml           # Metadata package và cấu hình công cụ
-└── requirements.txt         # Thư viện cho demo và kiểm thử
-```
-
-## Tài liệu và đóng góp
-
-- [Ghi chú mô hình và thuật toán](ALGORITHM_NOTES.md).
-- [Kết quả chất lượng và hướng dẫn kiểm chứng](QUALITY_RESULTS.md).
-- [Nguồn dữ liệu và giới hạn benchmark](data/README.md).
-- [Cấu hình nghiên cứu chất lượng](configs/coursework_quality.json).
-
-Khi đóng góp, mô tả thay đổi, bổ sung kiểm thử phù hợp và chạy test suite trước khi gửi pull request. Với thay đổi thuật toán hoặc cách tính chỉ tiêu, cập nhật tài liệu và tạo đợt thực nghiệm mới để có bằng chứng cho phiên bản mới.
-
-Dự án phục vụ học tập và nghiên cứu. Repository hiện chưa có tệp `LICENSE`; quyền sử dụng và phân phối dữ liệu benchmark cần được xem xét theo điều kiện của nguồn dữ liệu.
+Dự án phục vụ học tập và nghiên cứu. Repository hiện chưa có tệp `LICENSE`.
